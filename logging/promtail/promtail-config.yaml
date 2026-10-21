@@ -1,0 +1,77 @@
+# ==============================================================================
+# Promtail Log Shipper Configuration
+# ==============================================================================
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+  log_level: info
+
+positions:
+  filename: /positions/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    batchwait: 1s
+    batchsize: 102400
+
+scrape_configs:
+  # 1. Thu thập Nginx Access Log dạng JSON
+  - job_name: nginx-access
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx
+          log_type: access
+          service: project-management
+          __path__: /logs/nginx/access.log
+    pipeline_stages:
+      - json:
+          expressions:
+            timestamp: timestamp
+            client_ip: client_ip
+            method: method
+            uri: uri
+            status: status
+            request_time: request_time
+      - timestamp:
+          source: timestamp
+          format: RFC3339
+
+  # 2. Thu thập Nginx Error Log
+  - job_name: nginx-error
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx-error
+          log_type: error
+          service: project-management
+          __path__: /logs/nginx/error.log
+
+  # 3. Thu thập Application Log dạng JSON từ pm-app
+  - job_name: app
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: app
+          service: project-management
+          __path__: /logs/app/app.log
+    pipeline_stages:
+      - json:
+          expressions:
+            timestamp: timestamp
+            level: level
+            event: event
+            message: message
+            status: status
+            user: user
+            ip: ip
+      - timestamp:
+          source: timestamp
+          format: RFC3339
+      - labels:
+          level:
+          event:

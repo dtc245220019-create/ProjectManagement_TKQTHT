@@ -1,0 +1,53 @@
+services:
+  # ==============================================================================
+  # 1. Loki: Hệ thống lưu trữ và lập chỉ mục nhật ký tập trung (Internal)
+  # ==============================================================================
+  loki:
+    image: grafana/loki:3.4.2
+    container_name: pm-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./logging/loki/loki-config.yaml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    networks:
+      - monitoring
+    security_opt:
+      - no-new-privileges:true
+
+  # ==============================================================================
+  # 2. Promtail: Thu gom file log từ named volume và đẩy về Loki
+  # ==============================================================================
+  promtail:
+    image: grafana/promtail:3.4.2
+    container_name: pm-promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./logging/promtail/promtail-config.yaml:/etc/promtail/config.yml:ro
+      - app_logs:/logs/app:ro
+      - nginx_logs:/logs/nginx:ro
+      - promtail_positions:/positions
+    networks:
+      - monitoring
+    depends_on:
+      - loki
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  monitoring:
+    external: true
+    name: pm_monitoring_network
+
+volumes:
+  loki_data:
+    name: pm_loki_data
+  promtail_positions:
+    name: pm_promtail_positions
+  app_logs:
+    external: true
+    name: pm_app_logs
+  nginx_logs:
+    external: true
+    name: pm_nginx_logs
