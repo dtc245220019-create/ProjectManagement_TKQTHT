@@ -1,0 +1,64 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-1">Nhật ký Hoạt động & Kiểm toán (Audit Logs)</h3>
+      <p class="text-muted mb-0">Theo dõi toàn diện các sự kiện nghiệp vụ, thay đổi dữ liệu và đăng nhập bảo mật</p>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Thời gian</th>
+            <th>Tài khoản</th>
+            <th>Hành động</th>
+            <th>Đối tượng</th>
+            <th>Mã đối tượng</th>
+            <th>Địa chỉ IP</th>
+            <th>Dữ liệu chi tiết</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (logs.length === 0) { %>
+            <tr><td colspan="7" class="text-center py-4 text-muted">Chưa có nhật ký nào được ghi lại.</td></tr>
+          <% } else { %>
+            <% logs.forEach(l => { %>
+              <tr>
+                <td class="text-nowrap small text-muted"><%= new Date(l.created_at).toLocaleString('vi-VN') %></td>
+                <td>
+                  <span class="badge bg-secondary"><i class="bi bi-person me-1"></i><%= l.username %></span>
+                </td>
+                <td>
+                  <% if (l.action.includes('FAIL')) { %>
+                    <span class="badge bg-danger"><%= l.action %></span>
+                  <% } else if (l.action.includes('SUCCESS') || l.action.includes('CREATE')) { %>
+                    <span class="badge bg-success"><%= l.action %></span>
+                  <% } else if (l.action.includes('UPDATE')) { %>
+                    <span class="badge bg-primary"><%= l.action %></span>
+                  <% } else if (l.action.includes('DELETE')) { %>
+                    <span class="badge bg-warning text-dark"><%= l.action %></span>
+                  <% } else { %>
+                    <span class="badge bg-info text-dark"><%= l.action %></span>
+                  <% } %>
+                </td>
+                <td><span class="fw-semibold"><%= l.entity_type || '-' %></span></td>
+                <td><code>#<%= l.entity_id || '-' %></code></td>
+                <td><code><%= l.ip_address %></code></td>
+                <td>
+                  <code class="text-break small"><%= JSON.stringify(l.details) %></code>
+                </td>
+              </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

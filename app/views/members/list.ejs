@@ -1,0 +1,109 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-1">Quản lý Thành viên & Nhân sự</h3>
+      <p class="text-muted mb-0">Danh sách nhân sự tham gia các dự án phát triển phần mềm</p>
+    </div>
+    <a href="/members/new" class="btn btn-primary">
+      <i class="bi bi-person-plus me-1"></i> Thêm Thành viên
+    </a>
+  </div>
+
+  <div class="row g-4">
+    <% members.forEach(m => { %>
+      <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+          <div class="card-body p-4 d-flex flex-column">
+            <div class="d-flex align-items-center mb-3">
+              <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3 fs-4 fw-bold" style="width: 50px; height: 50px;">
+                <%= m.full_name.split(' ').pop().charAt(0) %>
+              </div>
+              <div>
+                <h5 class="fw-bold mb-0 text-dark"><%= m.full_name %></h5>
+                <small class="text-primary fw-semibold"><%= m.role %></small>
+              </div>
+            </div>
+
+            <ul class="list-unstyled small text-muted mb-4 flex-grow-1">
+              <li class="mb-2"><i class="bi bi-building me-2 text-secondary"></i> Phòng ban: <strong><%= m.department %></strong></li>
+              <li class="mb-2"><i class="bi bi-envelope me-2 text-secondary"></i> <%= m.email %></li>
+              <li class="mb-2"><i class="bi bi-telephone me-2 text-secondary"></i> <%= m.phone || 'Chưa cập nhật' %></li>
+              <li>
+                <i class="bi bi-circle-fill me-2 <%= m.status === 'Active' ? 'text-success' : 'text-danger' %>"></i>
+                Trạng thái: <span class="badge <%= m.status === 'Active' ? 'bg-success' : 'bg-secondary' %>"><%= m.status %></span>
+              </li>
+            </ul>
+
+            <div class="border-top pt-3 d-flex justify-content-between align-items-center">
+              <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editMemberModal<%= m.id %>">
+                <i class="bi bi-pencil me-1"></i> Sửa
+              </button>
+              <% if (currentUser && currentUser.role === 'admin') { %>
+                <form action="/members/<%= m.id %>/delete" method="POST" onsubmit="return confirm('Xóa thành viên <%= m.full_name %>?');">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash me-1"></i> Xóa
+                  </button>
+                </form>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Modal for Member -->
+      <div class="modal fade" id="editMemberModal<%= m.id %>" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <form action="/members/<%= m.id %>/edit" method="POST">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <div class="modal-header">
+                <h5 class="modal-title fw-bold">Chỉnh sửa Thành viên</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Họ và tên</label>
+                  <input type="text" class="form-control" name="full_name" value="<%= m.full_name %>" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Email</label>
+                  <input type="email" class="form-control" name="email" value="<%= m.email %>" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Vai trò / Chức danh</label>
+                  <input type="text" class="form-control" name="role" value="<%= m.role %>" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Phòng ban</label>
+                  <input type="text" class="form-control" name="department" value="<%= m.department %>" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Số điện thoại</label>
+                  <input type="text" class="form-control" name="phone" value="<%= m.phone || '' %>">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Trạng thái</label>
+                  <select class="form-select" name="status">
+                    <option value="Active" <%= m.status === 'Active' ? 'selected' : '' %>>Active (Hoạt động)</option>
+                    <option value="On Leave" <%= m.status === 'On Leave' ? 'selected' : '' %>>On Leave (Nghỉ phép)</option>
+                    <option value="Inactive" <%= m.status === 'Inactive' ? 'selected' : '' %>>Inactive (Tạm ngừng)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,30 @@
+/* Project Management Custom Styles */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #2d3748;
+}
+
+.card {
+  transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.table th {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.progress {
+  background-color: #e2e8f0;
+  border-radius: 9999px;
+}
+
+.progress-bar {
+  border-radius: 9999px;
+}
+
+.font-monospace {
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+}

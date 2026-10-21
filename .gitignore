@@ -1,0 +1,45 @@
+# Environment and secrets
+.env
+*.env
+!.env.example
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# SSL Certificates private keys
+certs/*.key
+certs/*.crt
+certs/*.pem
+!certs/.gitkeep
+
+# Database backups & local data
+backups/*.sql
+backups/*.dump
+postgres_data/
+pgadmin_data/
+prom_data/
+grafana_data/
+loki_data/
+promtail_positions/
+
+# Logs
+logs/
+*.log
+!docs/evidence/*.log
+
+# Operating system / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.pytest_cache/

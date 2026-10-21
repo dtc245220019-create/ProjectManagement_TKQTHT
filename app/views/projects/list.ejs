@@ -1,0 +1,130 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-1">Quản lý Dự án</h3>
+      <p class="text-muted mb-0">Danh sách các dự án đang triển khai và quản trị trong hệ thống</p>
+    </div>
+    <a href="/projects/new" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i> Tạo Dự án Mới
+    </a>
+  </div>
+
+  <!-- Bộ lọc -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-3">
+      <form method="GET" action="/projects" class="row g-2 align-items-center">
+        <div class="col-md-4">
+          <input type="text" class="form-control" name="search" placeholder="Tìm theo tên hoặc mã dự án..." value="<%= filters.search || '' %>">
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" name="status">
+            <option value="">-- Tất cả trạng thái --</option>
+            <option value="Planning" <%= filters.status === 'Planning' ? 'selected' : '' %>>Lập kế hoạch</option>
+            <option value="In Progress" <%= filters.status === 'In Progress' ? 'selected' : '' %>>Đang triển khai</option>
+            <option value="Completed" <%= filters.status === 'Completed' ? 'selected' : '' %>>Hoàn thành</option>
+            <option value="On Hold" <%= filters.status === 'On Hold' ? 'selected' : '' %>>Tạm dừng</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" name="priority">
+            <option value="">-- Mức độ ưu tiên --</option>
+            <option value="Critical" <%= filters.priority === 'Critical' ? 'selected' : '' %>>Nghiêm trọng (Critical)</option>
+            <option value="High" <%= filters.priority === 'High' ? 'selected' : '' %>>Cao (High)</option>
+            <option value="Medium" <%= filters.priority === 'Medium' ? 'selected' : '' %>>Trung bình (Medium)</option>
+            <option value="Low" <%= filters.priority === 'Low' ? 'selected' : '' %>>Thấp (Low)</option>
+          </select>
+        </div>
+        <div class="col-md-2 d-flex">
+          <button type="submit" class="btn btn-outline-secondary w-100 me-2"><i class="bi bi-filter"></i> Lọc</button>
+          <a href="/projects" class="btn btn-outline-danger"><i class="bi bi-x-circle"></i></a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bảng dự án -->
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Mã Dự án</th>
+            <th>Tên Dự án</th>
+            <th>Quản lý</th>
+            <th>Độ ưu tiên</th>
+            <th>Trạng thái</th>
+            <th>Tiến độ Tasks</th>
+            <th>Ngân sách</th>
+            <th class="text-end">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (projects.length === 0) { %>
+            <tr><td colspan="8" class="text-center py-4 text-muted">Không tìm thấy dự án nào.</td></tr>
+          <% } else { %>
+            <% projects.forEach(p => { 
+              const totalT = parseInt(p.total_tasks, 10) || 0;
+              const doneT = parseInt(p.completed_tasks, 10) || 0;
+              const percent = totalT > 0 ? Math.round((doneT / totalT) * 100) : 0;
+            %>
+              <tr>
+                <td><span class="badge bg-secondary font-monospace"><%= p.code %></span></td>
+                <td>
+                  <a href="/projects/<%= p.id %>" class="fw-bold text-dark text-decoration-none">
+                    <%= p.name %>
+                  </a>
+                  <div class="small text-muted text-truncate" style="max-width: 280px;"><%= p.description || 'Chưa có mô tả' %></div>
+                </td>
+                <td><%= p.manager_name || 'Chưa gán' %></td>
+                <td>
+                  <% if (p.priority === 'Critical') { %>
+                    <span class="badge bg-danger">Critical</span>
+                  <% } else if (p.priority === 'High') { %>
+                    <span class="badge bg-warning text-dark">High</span>
+                  <% } else if (p.priority === 'Medium') { %>
+                    <span class="badge bg-info text-dark">Medium</span>
+                  <% } else { %>
+                    <span class="badge bg-light text-dark">Low</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (p.status === 'In Progress') { %>
+                    <span class="badge bg-primary">Đang triển khai</span>
+                  <% } else if (p.status === 'Completed') { %>
+                    <span class="badge bg-success">Hoàn thành</span>
+                  <% } else if (p.status === 'Planning') { %>
+                    <span class="badge bg-secondary">Lập kế hoạch</span>
+                  <% } else { %>
+                    <span class="badge bg-warning text-dark"><%= p.status %></span>
+                  <% } %>
+                </td>
+                <td style="min-width: 140px;">
+                  <div class="d-flex align-items-center">
+                    <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                      <div class="progress-bar bg-success" role="progressbar" style="width: <%= percent %>%;"></div>
+                    </div>
+                    <small class="fw-bold"><%= doneT %>/<%= totalT %> (<%= percent %>%)</small>
+                  </div>
+                </td>
+                <td><%= Number(p.budget).toLocaleString('vi-VN') %> đ</td>
+                <td class="text-end">
+                  <a href="/projects/<%= p.id %>" class="btn btn-sm btn-outline-primary me-1" title="Chi tiết">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <a href="/projects/<%= p.id %>/edit" class="btn btn-sm btn-outline-secondary me-1" title="Sửa">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                </td>
+              </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

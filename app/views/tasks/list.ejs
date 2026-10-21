@@ -1,0 +1,117 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-1">Quản lý Công việc (Tasks)</h3>
+      <p class="text-muted mb-0">Theo dõi trạng thái, tiến độ và phân công nhiệm vụ trong toàn hệ thống</p>
+    </div>
+    <a href="/tasks/new" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i> Tạo Task Mới
+    </a>
+  </div>
+
+  <!-- Bộ lọc -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-3">
+      <form method="GET" action="/tasks" class="row g-2 align-items-center">
+        <div class="col-md-3">
+          <select class="form-select" name="projectId">
+            <option value="">-- Tất cả dự án --</option>
+            <% projects.forEach(p => { %>
+              <option value="<%= p.id %>" <%= filters.projectId == p.id ? 'selected' : '' %>><%= p.code %> - <%= p.name %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" name="status">
+            <option value="">-- Tất cả trạng thái --</option>
+            <option value="Todo" <%= filters.status === 'Todo' ? 'selected' : '' %>>Chờ xử lý (Todo)</option>
+            <option value="In Progress" <%= filters.status === 'In Progress' ? 'selected' : '' %>>Đang làm (In Progress)</option>
+            <option value="Review" <%= filters.status === 'Review' ? 'selected' : '' %>>Đang duyệt (Review)</option>
+            <option value="Done" <%= filters.status === 'Done' ? 'selected' : '' %>>Đã hoàn thành (Done)</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" name="assignedTo">
+            <option value="">-- Tất cả người làm --</option>
+            <% members.forEach(m => { %>
+              <option value="<%= m.id %>" <%= filters.assignedTo == m.id ? 'selected' : '' %>><%= m.full_name %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="col-md-3 d-flex">
+          <button type="submit" class="btn btn-outline-secondary w-100 me-2"><i class="bi bi-filter"></i> Lọc</button>
+          <a href="/tasks" class="btn btn-outline-danger"><i class="bi bi-x-circle"></i></a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Danh sách Tasks -->
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Tiêu đề Task</th>
+            <th>Thuộc Dự án</th>
+            <th>Người thực hiện</th>
+            <th>Độ ưu tiên</th>
+            <th>Hạn chót</th>
+            <th>Trạng thái</th>
+            <th class="text-end">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (tasks.length === 0) { %>
+            <tr><td colspan="7" class="text-center py-4 text-muted">Không có công việc nào phù hợp.</td></tr>
+          <% } else { %>
+            <% tasks.forEach(t => { %>
+              <tr>
+                <td>
+                  <div class="fw-bold text-dark"><%= t.title %></div>
+                  <small class="text-muted text-truncate d-inline-block" style="max-width: 300px;"><%= t.description || 'Không có mô tả' %></small>
+                </td>
+                <td>
+                  <a href="/projects/<%= t.project_id %>" class="text-decoration-none fw-semibold">
+                    <span class="badge bg-secondary"><%= t.project_code %></span> <%= t.project_name %>
+                  </a>
+                </td>
+                <td><%= t.assignee_name || 'Chưa gán' %></td>
+                <td>
+                  <span class="badge <%= t.priority === 'Critical' ? 'bg-danger' : (t.priority === 'High' ? 'bg-warning text-dark' : 'bg-info text-dark') %>">
+                    <%= t.priority %>
+                  </span>
+                </td>
+                <td><%= t.due_date ? new Date(t.due_date).toLocaleDateString('vi-VN') : '-' %></td>
+                <td>
+                  <form action="/tasks/<%= t.id %>/status" method="POST" class="d-inline">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="hidden" name="redirect" value="/tasks">
+                    <select name="status" class="form-select form-select-sm" onchange="this.form.submit()" style="width: auto;">
+                      <option value="Todo" <%= t.status === 'Todo' ? 'selected' : '' %>>Todo</option>
+                      <option value="In Progress" <%= t.status === 'In Progress' ? 'selected' : '' %>>In Progress</option>
+                      <option value="Review" <%= t.status === 'Review' ? 'selected' : '' %>>Review</option>
+                      <option value="Done" <%= t.status === 'Done' ? 'selected' : '' %>>Done</option>
+                    </select>
+                  </form>
+                </td>
+                <td class="text-end">
+                  <form action="/tasks/<%= t.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Xóa task này?');">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="hidden" name="redirect" value="/tasks">
+                    <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2" title="Xóa"><i class="bi bi-trash"></i></button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

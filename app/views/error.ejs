@@ -1,0 +1,20 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<div class="container py-5 my-auto text-center">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="p-5 bg-white rounded-3 shadow-sm border">
+        <h1 class="display-1 fw-bold text-danger mb-2"><%= typeof statusCode !== 'undefined' ? statusCode : 500 %></h1>
+        <h4 class="fw-bold mb-3"><%= typeof title !== 'undefined' ? title : 'Đã xảy ra lỗi' %></h4>
+        <p class="text-muted mb-4"><%= typeof message !== 'undefined' ? message : 'Vui lòng kiểm tra lại đường dẫn hoặc liên hệ quản trị hệ thống.' %></p>
+        <div class="d-flex justify-content-center gap-2">
+          <a href="/" class="btn btn-primary"><i class="bi bi-house-door me-1"></i> Trang chủ</a>
+          <a href="javascript:history.back()" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Quay lại</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

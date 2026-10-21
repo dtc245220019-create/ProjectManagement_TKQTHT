@@ -1,0 +1,96 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+          <h4 class="fw-bold mb-0 text-dark"><i class="bi bi-pencil-square text-primary me-2"></i>Chỉnh sửa Dự án</h4>
+          <span class="badge bg-secondary font-monospace"><%= project.code %></span>
+        </div>
+        <div class="card-body p-4">
+          <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-danger"><%= error %></div>
+          <% } %>
+
+          <form action="/projects/<%= project.id %>/edit" method="POST">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-4">
+                <label for="code" class="form-label fw-semibold">Mã Dự án <span class="text-danger">*</span></label>
+                <input type="text" class="form-control text-uppercase" id="code" name="code" required value="<%= project.code %>">
+              </div>
+              <div class="col-md-8">
+                <label for="name" class="form-label fw-semibold">Tên Dự án <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="name" name="name" required value="<%= project.name %>">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="description" class="form-label fw-semibold">Mô tả Dự án</label>
+              <textarea class="form-control" id="description" name="description" rows="3"><%= project.description || '' %></textarea>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-4">
+                <label for="status" class="form-label fw-semibold">Trạng thái</label>
+                <select class="form-select" id="status" name="status">
+                  <option value="Planning" <%= project.status === 'Planning' ? 'selected' : '' %>>Lập kế hoạch (Planning)</option>
+                  <option value="In Progress" <%= project.status === 'In Progress' ? 'selected' : '' %>>Đang triển khai (In Progress)</option>
+                  <option value="Completed" <%= project.status === 'Completed' ? 'selected' : '' %>>Hoàn thành (Completed)</option>
+                  <option value="On Hold" <%= project.status === 'On Hold' ? 'selected' : '' %>>Tạm dừng (On Hold)</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="priority" class="form-label fw-semibold">Mức độ ưu tiên</label>
+                <select class="form-select" id="priority" name="priority">
+                  <option value="Medium" <%= project.priority === 'Medium' ? 'selected' : '' %>>Trung bình (Medium)</option>
+                  <option value="High" <%= project.priority === 'High' ? 'selected' : '' %>>Cao (High)</option>
+                  <option value="Critical" <%= project.priority === 'Critical' ? 'selected' : '' %>>Nghiêm trọng (Critical)</option>
+                  <option value="Low" <%= project.priority === 'Low' ? 'selected' : '' %>>Thấp (Low)</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="manager_id" class="form-label fw-semibold">Quản lý Dự án (PM)</label>
+                <select class="form-select" id="manager_id" name="manager_id">
+                  <option value="">-- Chọn Quản lý --</option>
+                  <% members.forEach(m => { %>
+                    <option value="<%= m.id %>" <%= project.manager_id == m.id ? 'selected' : '' %>>
+                      <%= m.full_name %> (<%= m.role %>)
+                    </option>
+                  <% }) %>
+                </select>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <label for="start_date" class="form-label fw-semibold">Ngày bắt đầu</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="<%= project.start_date ? new Date(project.start_date).toISOString().split('T')[0] : '' %>">
+              </div>
+              <div class="col-md-4">
+                <label for="end_date" class="form-label fw-semibold">Ngày kết thúc dự kiến</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="<%= project.end_date ? new Date(project.end_date).toISOString().split('T')[0] : '' %>">
+              </div>
+              <div class="col-md-4">
+                <label for="budget" class="form-label fw-semibold">Ngân sách (VNĐ)</label>
+                <input type="number" class="form-control" id="budget" name="budget" step="100000" value="<%= project.budget || '0' %>">
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+              <a href="/projects/<%= project.id %>" class="btn btn-outline-secondary">Hủy bỏ</a>
+              <button type="submit" class="btn btn-primary px-4 fw-semibold">
+                <i class="bi bi-save me-1"></i> Cập nhật Dự án
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,95 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-header bg-white py-3 border-bottom">
+          <h4 class="fw-bold mb-0 text-dark"><i class="bi bi-plus-circle text-primary me-2"></i>Tạo Công việc Mới</h4>
+        </div>
+        <div class="card-body p-4">
+          <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-danger"><%= error %></div>
+          <% } %>
+
+          <form action="/tasks" method="POST">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+            <div class="mb-3">
+              <label for="project_id" class="form-label fw-semibold">Thuộc Dự án <span class="text-danger">*</span></label>
+              <select class="form-select" id="project_id" name="project_id" required>
+                <option value="">-- Chọn dự án --</option>
+                <% projects.forEach(p => { %>
+                  <option value="<%= p.id %>" <%= selectedProjectId == p.id ? 'selected' : '' %>>
+                    <%= p.code %> - <%= p.name %>
+                  </option>
+                <% }) %>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label for="title" class="form-label fw-semibold">Tiêu đề Công việc <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="title" name="title" required placeholder="VD: Cấu hình Prometheus Exporter..." value="<%= formData.title || '' %>">
+            </div>
+
+            <div class="mb-3">
+              <label for="description" class="form-label fw-semibold">Mô tả chi tiết</label>
+              <textarea class="form-control" id="description" name="description" rows="3" placeholder="Yêu cầu kỹ thuật, tiêu chí nghiệm thu..."><%= formData.description || '' %></textarea>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label for="status" class="form-label fw-semibold">Trạng thái ban đầu</label>
+                <select class="form-select" id="status" name="status">
+                  <option value="Todo">Chờ xử lý (Todo)</option>
+                  <option value="In Progress">Đang thực hiện (In Progress)</option>
+                  <option value="Review">Đang xem xét (Review)</option>
+                  <option value="Done">Đã hoàn thành (Done)</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="priority" class="form-label fw-semibold">Độ ưu tiên</label>
+                <select class="form-select" id="priority" name="priority">
+                  <option value="Medium">Trung bình (Medium)</option>
+                  <option value="High">Cao (High)</option>
+                  <option value="Critical">Nghiêm trọng (Critical)</option>
+                  <option value="Low">Thấp (Low)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label for="assigned_to" class="form-label fw-semibold">Người thực hiện</label>
+                <select class="form-select" id="assigned_to" name="assigned_to">
+                  <option value="">-- Chưa phân công --</option>
+                  <% members.forEach(m => { %>
+                    <option value="<%= m.id %>"><%= m.full_name %> (<%= m.role %>)</option>
+                  <% }) %>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label for="due_date" class="form-label fw-semibold">Hạn chót</label>
+                <input type="date" class="form-control" id="due_date" name="due_date">
+              </div>
+              <div class="col-md-3">
+                <label for="estimated_hours" class="form-label fw-semibold">Giờ ước tính</label>
+                <input type="number" step="0.5" class="form-control" id="estimated_hours" name="estimated_hours" value="8">
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+              <a href="/tasks" class="btn btn-outline-secondary">Hủy bỏ</a>
+              <button type="submit" class="btn btn-primary px-4 fw-semibold">
+                <i class="bi bi-save me-1"></i> Lưu Công việc
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

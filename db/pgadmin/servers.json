@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "PostgreSQL PM DB (Docker Internal)",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "pm_db",
+      "Username": "postgres",
+      "SSLMode": "prefer"
+    }
+  }
+}

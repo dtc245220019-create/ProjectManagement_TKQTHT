@@ -1,0 +1,215 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<div class="container py-4">
+  <!-- Header Banner -->
+  <div class="p-4 mb-4 bg-white rounded-3 shadow-sm border-start border-primary border-4">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h2 class="fw-bold mb-1 text-dark">Hệ thống Quản lý Dự án (Project Management)</h2>
+        <p class="text-muted mb-0">
+          Sinh viên thực hiện: <strong>Đinh Gia Bảo</strong> - MSSV: <strong>DTC245220019</strong> - Lớp: <strong>ATTT K23A</strong> | GVHD: <strong>Nguyễn Anh Chuyên</strong>
+        </p>
+      </div>
+      <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <a href="/projects/new" class="btn btn-primary me-2">
+          <i class="bi bi-folder-plus me-1"></i> Tạo Dự án
+        </a>
+        <a href="/tasks/new" class="btn btn-outline-success">
+          <i class="bi bi-plus-circle me-1"></i> Giao việc
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats KPI Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+      <div class="card border-0 shadow-sm rounded-3 bg-primary text-white p-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="text-uppercase text-white-50 mb-1 small fw-semibold">Tổng số Dự án</h6>
+            <h2 class="fw-bold mb-0"><%= stats.projects.total_projects %></h2>
+            <small class="text-white-50"><%= stats.projects.in_progress_projects %> đang triển khai</small>
+          </div>
+          <i class="bi bi-kanban fs-1 text-white-50"></i>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card border-0 shadow-sm rounded-3 bg-success text-white p-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="text-uppercase text-white-50 mb-1 small fw-semibold">Công việc hoàn thành</h6>
+            <h2 class="fw-bold mb-0"><%= stats.tasks.done_tasks %></h2>
+            <small class="text-white-50">Trên tổng số <%= stats.tasks.total_tasks %> tasks</small>
+          </div>
+          <i class="bi bi-check2-circle fs-1 text-white-50"></i>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card border-0 shadow-sm rounded-3 bg-warning text-dark p-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="text-uppercase text-muted mb-1 small fw-semibold">Tasks Đang thực hiện</h6>
+            <h2 class="fw-bold mb-0"><%= stats.tasks.in_progress_tasks %></h2>
+            <small class="text-muted"><%= stats.tasks.todo_tasks %> chờ xử lý</small>
+          </div>
+          <i class="bi bi-hourglass-split fs-1 text-black-50"></i>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card border-0 shadow-sm rounded-3 bg-info text-dark p-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="text-uppercase text-muted mb-1 small fw-semibold">Nhân sự tham gia</h6>
+            <h2 class="fw-bold mb-0"><%= stats.members.total_members %></h2>
+            <small class="text-muted"><%= stats.members.active_members %> đang hoạt động</small>
+          </div>
+          <i class="bi bi-people-fill fs-1 text-black-50"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Cột Dự án -->
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-folder2-open text-primary me-2"></i>Dự án gần đây</h5>
+          <a href="/projects" class="btn btn-sm btn-link text-decoration-none">Xem tất cả &rarr;</a>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Mã</th>
+                  <th>Tên Dự án</th>
+                  <th>Trạng thái</th>
+                  <th>Tiến độ</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (projects.length === 0) { %>
+                  <tr><td colspan="5" class="text-center py-4 text-muted">Chưa có dự án nào.</td></tr>
+                <% } else { %>
+                  <% projects.forEach(p => { 
+                    const totalT = parseInt(p.total_tasks, 10) || 0;
+                    const doneT = parseInt(p.completed_tasks, 10) || 0;
+                    const percent = totalT > 0 ? Math.round((doneT / totalT) * 100) : 0;
+                  %>
+                    <tr>
+                      <td><span class="badge bg-secondary"><%= p.code %></span></td>
+                      <td>
+                        <a href="/projects/<%= p.id %>" class="fw-semibold text-decoration-none text-dark">
+                          <%= p.name %>
+                        </a>
+                        <div class="small text-muted"><%= p.manager_name || 'Chưa phân công' %></div>
+                      </td>
+                      <td>
+                        <% if (p.status === 'In Progress') { %>
+                          <span class="badge bg-primary">Đang triển khai</span>
+                        <% } else if (p.status === 'Completed') { %>
+                          <span class="badge bg-success">Hoàn thành</span>
+                        <% } else if (p.status === 'Planning') { %>
+                          <span class="badge bg-info text-dark">Lập kế hoạch</span>
+                        <% } else { %>
+                          <span class="badge bg-secondary"><%= p.status %></span>
+                        <% } %>
+                      </td>
+                      <td style="min-width: 120px;">
+                        <div class="d-flex align-items-center">
+                          <div class="progress flex-grow-1 me-2" style="height: 6px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: <%= percent %>%;"></div>
+                          </div>
+                          <small class="fw-bold"><%= percent %>%</small>
+                        </div>
+                      </td>
+                      <td>
+                        <a href="/projects/<%= p.id %>" class="btn btn-sm btn-outline-primary">Chi tiết</a>
+                      </td>
+                    </tr>
+                  <% }) %>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cột Tasks -->
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-list-task text-success me-2"></i>Công việc cần làm</h5>
+          <a href="/tasks" class="btn btn-sm btn-link text-decoration-none">Xem tất cả &rarr;</a>
+        </div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush">
+            <% if (tasks.length === 0) { %>
+              <div class="text-center py-4 text-muted">Không có công việc nào.</div>
+            <% } else { %>
+              <% tasks.forEach(t => { %>
+                <div class="list-group-item d-flex justify-content-between align-items-start py-3">
+                  <div class="ms-2 me-auto">
+                    <div class="fw-semibold"><%= t.title %></div>
+                    <small class="text-muted">
+                      <%= t.project_code %> • Người làm: <%= t.assignee_name || 'Chưa gán' %>
+                    </small>
+                  </div>
+                  <span class="badge <%= t.status === 'Done' ? 'bg-success' : (t.status === 'In Progress' ? 'bg-primary' : 'bg-warning text-dark') %> rounded-pill">
+                    <%= t.status %>
+                  </span>
+                </div>
+              <% }) %>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audit Logs Section -->
+  <div class="card border-0 shadow-sm rounded-3 mt-2">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+      <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-shield-check text-info me-2"></i>Nhật ký Hệ thống gần đây (Audit Logs)</h5>
+      <a href="/audit" class="btn btn-sm btn-link text-decoration-none">Xem tất cả logs &rarr;</a>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-striped align-middle mb-0 small">
+          <thead class="table-light">
+            <tr>
+              <th>Thời gian</th>
+              <th>Người dùng</th>
+              <th>Hành động</th>
+              <th>Thực thể</th>
+              <th>Địa chỉ IP</th>
+              <th>Chi tiết</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% audits.forEach(a => { %>
+              <tr>
+                <td><%= new Date(a.created_at).toLocaleString('vi-VN') %></td>
+                <td><strong><%= a.username %></strong></td>
+                <td><span class="badge bg-dark"><%= a.action %></span></td>
+                <td><%= a.entity_type %> #<%= a.entity_id || '-' %></td>
+                <td><code><%= a.ip_address %></code></td>
+                <td class="text-truncate" style="max-width: 250px;"><%= JSON.stringify(a.details) %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>
