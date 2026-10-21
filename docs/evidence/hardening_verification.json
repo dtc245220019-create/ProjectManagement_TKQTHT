@@ -1,0 +1,16 @@
+{
+  "app_uid": "uid=1000(node) gid=1000(node) groups=1000(node)",
+  "readonly_rootfs": true,
+  "cap_drop": [
+    "ALL"
+  ],
+  "security_opt": [
+    "no-new-privileges:true"
+  ],
+  "tmpfs": {
+    "/tmp": "rw,noexec,nosuid,size=64m"
+  },
+  "database_network_internal": true,
+  "postgres_port_bindings": {},
+  "pm_app_table_grants": "grantee | privilege_type \n---------+----------------\n pm_app  | INSERT\n pm_app  | SELECT\n pm_app  | UPDATE\n pm_app  | DELETE\n(4 rows)"
+}

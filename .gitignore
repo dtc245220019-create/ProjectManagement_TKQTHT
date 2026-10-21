@@ -43,3 +43,5 @@ __pycache__/
 *$py.class
 venv/
 .pytest_cache/
+
+temp_downloads/

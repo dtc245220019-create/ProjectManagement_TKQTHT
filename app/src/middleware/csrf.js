@@ -41,7 +41,9 @@ function csrfProtection(req, res, next) {
     return res.status(403).render('error', {
       title: 'Lỗi bảo mật CSRF - 403 Forbidden',
       statusCode: 403,
-      message: 'Mã xác thực bảo mật (CSRF Token) không hợp lệ hoặc đã hết hạn. Vui lòng thử tải lại trang.'
+      message: 'Mã xác thực bảo mật (CSRF Token) không hợp lệ hoặc đã hết hạn. Vui lòng thử tải lại trang.',
+      currentUser: req.session ? req.session.user : null,
+      currentPath: req.path
     });
   }
 

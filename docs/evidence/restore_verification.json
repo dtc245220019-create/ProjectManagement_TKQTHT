@@ -1,0 +1,37 @@
+{
+  "backup_file": "backups\\pm_db_backup_20261021_234722.sql",
+  "target_db": "pm_restore_test",
+  "all_matched": true,
+  "tables": {
+    "users": {
+      "source_count": 3,
+      "restored_count": 3,
+      "matched": true
+    },
+    "members": {
+      "source_count": 5,
+      "restored_count": 5,
+      "matched": true
+    },
+    "projects": {
+      "source_count": 4,
+      "restored_count": 4,
+      "matched": true
+    },
+    "tasks": {
+      "source_count": 9,
+      "restored_count": 9,
+      "matched": true
+    },
+    "project_members": {
+      "source_count": 10,
+      "restored_count": 10,
+      "matched": true
+    },
+    "audit_logs": {
+      "source_count": 11,
+      "restored_count": 11,
+      "matched": true
+    }
+  }
+}

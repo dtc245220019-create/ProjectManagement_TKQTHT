@@ -7,6 +7,8 @@ services:
     container_name: pm-init-logs
     command: >
       sh -c "mkdir -p /logs/app /logs/nginx &&
+             rm -f /logs/nginx/access.log /logs/nginx/error.log &&
+             touch /logs/nginx/access.log /logs/nginx/error.log &&
              chown -R 1000:1000 /logs/app &&
              chown -R 101:101 /logs/nginx &&
              chmod -R 755 /logs/app /logs/nginx"
@@ -55,7 +57,7 @@ services:
     container_name: pm-pgadmin
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@pm.local}
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-dtc245220019@ictu.edu.vn}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
       PGADMIN_CONFIG_SERVER_MODE: "False"
       PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"

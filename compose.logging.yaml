@@ -37,7 +37,7 @@ services:
 
 networks:
   monitoring:
-    external: true
+    driver: bridge
     name: pm_monitoring_network
 
 volumes:
@@ -46,8 +46,6 @@ volumes:
   promtail_positions:
     name: pm_promtail_positions
   app_logs:
-    external: true
     name: pm_app_logs
   nginx_logs:
-    external: true
     name: pm_nginx_logs

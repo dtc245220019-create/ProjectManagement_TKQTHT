@@ -53,9 +53,9 @@ app.use(
   })
 );
 
-// CSRF Protection & View Globals
-app.use(csrfProtection);
+// Population of View Globals & CSRF Protection
 app.use(populateUser);
+app.use(csrfProtection);
 
 // HTTP Access Logging Middleware (JSON format cho Promtail/Loki)
 app.use((req, res, next) => {

@@ -1,0 +1,81 @@
+{
+  "timestamp": 1792601332.7777991,
+  "summary": "15/15",
+  "results": [
+    {
+      "test": "HTTP to HTTPS Redirect",
+      "status": "PASS",
+      "details": "Status 301, Location: https://127.0.0.1:8443/"
+    },
+    {
+      "test": "System Health & Database Connection",
+      "status": "PASS",
+      "details": "UP, DB: pm_db as pm_app"
+    },
+    {
+      "test": "Security Headers (Hardening)",
+      "status": "PASS",
+      "details": "nosniff=True, X-Frame-Options=DENY, HSTS=True"
+    },
+    {
+      "test": "Access Control (Unauthenticated Redirect)",
+      "status": "PASS",
+      "details": "Redirected to /login?redirect=%2Fprojects"
+    },
+    {
+      "test": "CSRF Token Generation",
+      "status": "PASS",
+      "details": "Token: 6f559a2132b4..."
+    },
+    {
+      "test": "Login Failure & Security Audit Event",
+      "status": "PASS",
+      "details": "HTTP 401 received, login_failed logged"
+    },
+    {
+      "test": "Login Success & Session Auth",
+      "status": "PASS",
+      "details": "Logged in as admin, Dashboard rendered"
+    },
+    {
+      "test": "Cookie Security Flags",
+      "status": "PASS",
+      "details": "pm_session_id exists"
+    },
+    {
+      "test": "CRUD: Create Project",
+      "status": "PASS",
+      "details": "Created project ID: 7, Code: PRJ-TEST-332"
+    },
+    {
+      "test": "CRUD: Read Project Detail",
+      "status": "PASS",
+      "details": "Project 7 content verified in HTML"
+    },
+    {
+      "test": "CRUD: Delete Project",
+      "status": "PASS",
+      "details": "Project 7 deleted successfully"
+    },
+    {
+      "test": "CSRF Protection Enforcement",
+      "status": "PASS",
+      "details": "HTTP 403 Forbidden correctly returned"
+    },
+    {
+      "test": "HTTP 404 Error Handling",
+      "status": "PASS",
+      "details": "HTTP 404 correctly rendered and logged"
+    },
+    {
+      "test": "Prometheus Active Targets",
+      "status": "PASS",
+      "details": "Total: 4, UP: cadvisor, nginx, postgres, prometheus"
+    },
+    {
+      "test": "Grafana Observability Server",
+      "status": "PASS",
+      "details": "Status 200 OK, database: ok"
+    }
+  ]
+}

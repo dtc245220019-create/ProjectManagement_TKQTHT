@@ -106,10 +106,11 @@ networks:
     driver: bridge
     name: pm_monitoring_network
   database:
-    external: true
+    driver: bridge
+    internal: true
     name: pm_database_network
   web:
-    external: true
+    driver: bridge
     name: pm_web_network
 
 volumes:
