@@ -1,0 +1,40 @@
+# ==============================================================================
+# Prometheus Configuration - Project Management System (Đề 14)
+# ==============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+rule_files:
+  - "alert.rules.yml"
+
+scrape_configs:
+  # 1. Tự giám sát Prometheus
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["prometheus:9090"]
+        labels:
+          service: "monitoring"
+
+  # 2. Giám sát tài nguyên container qua cAdvisor
+  - job_name: "cadvisor"
+    static_configs:
+      - targets: ["cadvisor:8080"]
+        labels:
+          service: "containers"
+
+  # 3. Giám sát Reverse Proxy Nginx qua nginx-prometheus-exporter
+  - job_name: "nginx"
+    static_configs:
+      - targets: ["nginx-exporter:9113"]
+        labels:
+          service: "web-proxy"
+
+  # 4. Giám sát CSDL PostgreSQL qua postgres-exporter
+  - job_name: "postgres"
+    static_configs:
+      - targets: ["postgres-exporter:9187"]
+        labels:
+          service: "database"

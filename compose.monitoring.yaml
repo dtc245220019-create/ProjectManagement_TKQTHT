@@ -1,0 +1,119 @@
+services:
+  # ==============================================================================
+  # 1. cAdvisor: Thu thập metrics tài nguyên container từ Docker Engine
+  # ==============================================================================
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.51.0
+    container_name: pm-cadvisor
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - monitoring
+
+  # ==============================================================================
+  # 2. PostgreSQL Exporter: Thu thập chỉ số hoạt động CSDL PostgreSQL
+  # ==============================================================================
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.16.0
+    container_name: pm-postgres-exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${EXPORTER_DB_USER}:${EXPORTER_DB_PASSWORD}@postgres:5432/${POSTGRES_DB:-pm_db}?sslmode=disable"
+    networks:
+      - database
+      - monitoring
+    depends_on:
+      postgres:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+
+  # ==============================================================================
+  # 3. Nginx Prometheus Exporter: Đọc stub_status của Nginx Reverse Proxy
+  # ==============================================================================
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:1.4.1
+    container_name: pm-nginx-exporter
+    restart: unless-stopped
+    command:
+      - -nginx.scrape-uri=http://nginx:8082/stub_status
+    networks:
+      - web
+      - monitoring
+    depends_on:
+      nginx:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+
+  # ==============================================================================
+  # 4. Prometheus: Hệ thống lưu trữ và truy vấn time-series metrics
+  # ==============================================================================
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    container_name: pm-prometheus
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9090:9090"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+      - --web.enable-lifecycle
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/alert.rules.yml:/etc/prometheus/alert.rules.yml:ro
+      - prom_data:/prometheus
+    networks:
+      - monitoring
+    security_opt:
+      - no-new-privileges:true
+
+  # ==============================================================================
+  # 5. Grafana: Bảng điều khiển trực quan hóa Dashboard & Truy vấn Explore
+  # ==============================================================================
+  grafana:
+    image: grafana/grafana:11.5.0
+    container_name: pm-grafana
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3002}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: "http://localhost:${GRAFANA_PORT:-3002}/"
+    volumes:
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  monitoring:
+    driver: bridge
+    name: pm_monitoring_network
+  database:
+    external: true
+    name: pm_database_network
+  web:
+    external: true
+    name: pm_web_network
+
+volumes:
+  prom_data:
+    name: pm_prometheus_data
+  grafana_data:
+    name: pm_grafana_data

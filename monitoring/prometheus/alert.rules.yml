@@ -1,0 +1,29 @@
+groups:
+  - name: project_management_alerts
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Dịch vụ {{ $labels.job }} bị ngắt kết nối"
+          description: "Target {{ $labels.instance }} thuộc job {{ $labels.job }} đã mất kết nối hơn 1 phút."
+
+      - alert: PostgresDown
+        expr: pg_up == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Cơ sở dữ liệu PostgreSQL không khả dụng"
+          description: "postgres-exporter không thể kết nối tới máy chủ PostgreSQL."
+
+      - alert: NginxDown
+        expr: nginx_up == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Nginx Reverse Proxy không khả dụng"
+          description: "nginx-exporter không thể kết nối tới stub_status của Nginx."

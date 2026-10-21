@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: 'ProjectManagement'
+    orgId: 1
+    folder: 'Đề 14 - Project Management'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards
