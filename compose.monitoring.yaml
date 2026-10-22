@@ -3,7 +3,7 @@ services:
   # 1. cAdvisor: Thu thập metrics tài nguyên container từ Docker Engine
   # ==============================================================================
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.51.0
+    image: ghcr.io/google/cadvisor:0.55.1
     container_name: pm-cadvisor
     restart: unless-stopped
     privileged: true
@@ -12,6 +12,7 @@ services:
       - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
+      - /var/lib/containerd/:/var/lib/containerd:ro
       - /dev/disk/:/dev/disk:ro
     networks:
       - monitoring

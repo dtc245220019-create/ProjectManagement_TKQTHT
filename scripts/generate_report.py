@@ -3,8 +3,8 @@ import sys
 import docx
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.table import WD_TABLE_ALIGNMENT, WD_ALIGN_VERTICAL
-from docx.oxml import parse_xml, OxmlElement
+from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.oxml import parse_xml
 from docx.oxml.ns import nsdecls, qn
 
 if sys.stdout.encoding != 'utf-8':
@@ -13,1033 +13,723 @@ if sys.stdout.encoding != 'utf-8':
     except Exception:
         pass
 
+SAMPLE_DOCX = r"C:\Users\Gia bao\OneDrive\Tài liệu\Bao_cao_De13_Tran_Dang_Cong_Tam_DTC245220005.docx"
 OUTPUT_DOCX = r"E:\ProjectManagement\Bao_cao_De14_Dinh_Gia_Bao_DTC245220019.docx"
-LOGO_PATH = r"E:\ProjectManagement\docs\assets\logo_ictu.png"
 EVIDENCE_DIR = r"E:\ProjectManagement\docs\evidence"
 
 def create_report():
-    doc = docx.Document()
+    print(f"Loading base template from: {SAMPLE_DOCX}")
+    doc = docx.Document(SAMPLE_DOCX)
 
-    # 1. Page Setup (A4, Margins: Top 2cm, Bottom 2cm, Left 3cm, Right 1.5cm)
-    for section in doc.sections:
-        section.page_width = Inches(8.27)   # 21.0 cm
-        section.page_height = Inches(11.69) # 29.7 cm
-        section.top_margin = Inches(0.79)    # 2.0 cm
-        section.bottom_margin = Inches(0.79) # 2.0 cm
-        section.left_margin = Inches(1.18)   # 3.0 cm
-        section.right_margin = Inches(0.59)  # 1.5 cm
+    # =========================================================================
+    # 1. UPDATE COVER PAGE (Table 0) IN-PLACE (100% Exact Sample Cover Layout)
+    # =========================================================================
+    cover_table = doc.tables[0]
+    replacements = {
+        "Website Portfolio / Giới thiệu Cá nhân": "Hệ thống Quản lý Dự án (Project Management)",
+        "Trần Đặng Công Tâm": "Đinh Gia Bảo",
+        "DTC245220005": "DTC245220019"
+    }
+    for row in cover_table.rows:
+        for cell in row.cells:
+            for p in cell.paragraphs:
+                for run in p.runs:
+                    for old_str, new_str in replacements.items():
+                        if old_str in run.text:
+                            run.text = run.text.replace(old_str, new_str)
 
-    # Base Styles
-    style_normal = doc.styles['Normal']
-    style_normal.font.name = 'Times New Roman'
-    style_normal.font.size = Pt(12)
-    style_normal.font.color.rgb = RGBColor(15, 23, 42) # #0F172A
-    style_normal.paragraph_format.line_spacing = 1.2
-    style_normal.paragraph_format.space_after = Pt(4)
-    style_normal.paragraph_format.space_before = Pt(0)
+    # =========================================================================
+    # 2. UPDATE LỜI NÓI ĐẦU (Paragraphs 3..7) IN-PLACE
+    # =========================================================================
+    def set_para_text_styled(p, text, size_pt=13, bold=False):
+        p.clear()
+        r = p.add_run(text)
+        r.font.name = "Times New Roman"
+        r.font.size = Pt(size_pt)
+        r.font.bold = bold
+        r.font.color.rgb = RGBColor(0, 0, 0)
 
-    # XML Helper Functions
-    def set_cell_background(cell, fill_hex):
-        tcPr = cell._tc.get_or_add_tcPr()
-        shd = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{fill_hex}"/>')
-        tcPr.append(shd)
+    set_para_text_styled(
+        doc.paragraphs[3],
+        "Báo cáo trình bày kết quả triển khai Đề 14 Hệ thống Quản lý Dự án (Project Management) của sinh viên Đinh Gia Bảo. Hệ thống cung cấp giao diện theo dõi tổng quan tiến độ, quản lý danh mục dự án, phân công công việc (tasks), quản trị thành viên (members) và nhật ký kiểm toán hành động (audit logs) với dữ liệu lưu trữ bền vững trong PostgreSQL 16. Toàn bộ dịch vụ được đóng gói bằng Docker Compose, tiếp nhận truy cập qua Nginx reverse proxy, tích hợp hệ thống giám sát và log tập trung."
+    )
+    set_para_text_styled(
+        doc.paragraphs[4],
+        "Trọng tâm của bài thực hành là chứng minh ứng dụng hoạt động đồng bộ cùng hạ tầng vận hành thực tế. Vì vậy, bên cạnh mã nguồn và cấu hình, báo cáo đưa vào ảnh chụp giao diện thật từ hệ thống đang chạy, lịch sử commit GitHub, kết quả truy vấn metrics trên Prometheus và Grafana, ba truy vấn LogQL trên Loki và các phép kiểm chứng bảo mật container. Dữ liệu thực nghiệm được thu thập ngày 21–22 tháng 10 năm 2026 trên Docker Desktop chạy Linux containers."
+    )
+    set_para_text_styled(
+        doc.paragraphs[5],
+        "Qua quá trình triển khai, ứng dụng kết nối ổn định tới PostgreSQL bằng tài khoản phân quyền tối thiểu pm_app; công cụ pgAdmin 4 phục vụ quản trị cơ sở dữ liệu; Nginx cung cấp HTTPS bằng chứng chỉ tự ký RSA 3072 bit và các HTTP security headers; Prometheus thu thập dữ liệu từ cAdvisor, Nginx exporter và PostgreSQL exporter; Grafana hiển thị dashboard trực quan và truy vấn được log JSON của Nginx cùng ứng dụng trong Loki. Các biện pháp hardening và quy trình backup phục hồi thử vào database độc lập đều được kiểm tra thực nghiệm, không chỉ dừng ở việc khai báo trong file cấu hình."
+    )
+    set_para_text_styled(
+        doc.paragraphs[6],
+        "Em xin cảm ơn thầy Nguyễn Anh Chuyên đã tận tình hướng dẫn học phần Triển khai và Quản trị Hệ thống Phần mềm. Thông qua đề tài, em có cơ hội hệ thống hóa quy trình từ đóng gói ứng dụng, điều phối dịch vụ đa container, giám sát tài nguyên, phân tích nhật ký đến kiểm thử an toàn hệ thống và trình bày minh chứng kỹ thuật. Những giới hạn còn tồn tại được nêu rõ trong phần kết luận để định hướng cải tiến phù hợp."
+    )
+    doc.paragraphs[7].clear()
+    r_sig1 = doc.paragraphs[7].add_run("Sinh viên thực hiện")
+    r_sig1.font.name = "Times New Roman"
+    r_sig1.font.size = Pt(13)
+    r_sig1.font.color.rgb = RGBColor(0, 0, 0)
+    r_sig1.add_break()
+    r_sig2 = doc.paragraphs[7].add_run("Đinh Gia Bảo")
+    r_sig2.font.name = "Times New Roman"
+    r_sig2.font.size = Pt(13)
+    r_sig2.font.color.rgb = RGBColor(0, 0, 0)
 
-    def set_cell_margins(cell, top=120, bottom=120, left=150, right=150):
-        tcPr = cell._tc.get_or_add_tcPr()
-        tcMar = parse_xml(f'<w:tcMar {nsdecls("w")}><w:top w:w="{top}" w:type="dxa"/><w:bottom w:w="{bottom}" w:type="dxa"/><w:left w:w="{left}" w:type="dxa"/><w:right w:w="{right}" w:type="dxa"/></w:tcMar>')
-        tcPr.append(tcMar)
+    # =========================================================================
+    # 3. CLEAR OLD BODY ELEMENTS AFTER SECTION 1 BREAK (Paragraph 44)
+    # =========================================================================
+    body = doc.element.body
+    p44_el = doc.paragraphs[44]._element
+    idx_p44 = list(body).index(p44_el)
+    for child in list(body)[idx_p44 + 1:]:
+        if child.tag.endswith("sectPr"):
+            continue
+        body.remove(child)
 
-    def set_table_borders(table, color="CBD5E1", sz="4", val="single"):
-        tblPr = table._tbl.tblPr
-        borders = parse_xml(
-            f'<w:tblBorders {nsdecls("w")}>'
-            f'<w:top w:val="{val}" w:sz="{sz}" w:space="0" w:color="{color}"/>'
-            f'<w:left w:val="{val}" w:sz="{sz}" w:space="0" w:color="{color}"/>'
-            f'<w:bottom w:val="{val}" w:sz="{sz}" w:space="0" w:color="{color}"/>'
-            f'<w:right w:val="{val}" w:sz="{sz}" w:space="0" w:color="{color}"/>'
-            f'<w:insideH w:val="{val}" w:sz="{sz}" w:space="0" w:color="{color}"/>'
-            f'<w:insideV w:val="{val}" w:sz="{sz}" w:space="0" w:color="{color}"/>'
-            f'</w:tblBorders>'
-        )
-        tblPr.append(borders)
-
-    def set_cover_borders(table, color="1E3A8A", sz="16", val="double"):
-        tblPr = table._tbl.tblPr
-        borders = parse_xml(
-            f'<w:tblBorders {nsdecls("w")}>'
-            f'<w:top w:val="{val}" w:sz="{sz}" w:space="0" w:color="{color}"/>'
-            f'<w:left w:val="{val}" w:sz="{sz}" w:space="0" w:color="{color}"/>'
-            f'<w:bottom w:val="{val}" w:sz="{sz}" w:space="0" w:color="{color}"/>'
-            f'<w:right w:val="{val}" w:sz="{sz}" w:space="0" w:color="{color}"/>'
-            f'<w:insideH w:val="none"/>'
-            f'<w:insideV w:val="none"/>'
-            f'</w:tblBorders>'
-        )
-        tblPr.append(borders)
-
-    def add_p(text="", bold=False, italic=False, size=12, color=RGBColor(15, 23, 42), align=WD_ALIGN_PARAGRAPH.JUSTIFY, space_after=4, space_before=0, line_spacing=1.2):
-        p = doc.add_paragraph()
-        p.alignment = align
-        p.paragraph_format.space_after = Pt(space_after)
-        p.paragraph_format.space_before = Pt(space_before)
-        p.paragraph_format.line_spacing = line_spacing
-        if text:
-            r = p.add_run(text)
-            r.font.name = 'Times New Roman'
-            r.font.size = Pt(size)
-            r.font.bold = bold
-            r.font.italic = italic
-            r.font.color.rgb = color
-        return p
-
-    def add_h1(text):
-        p = doc.add_paragraph()
+    # =========================================================================
+    # 4. HELPER FUNCTIONS MATCHING SAMPLE FORMATTING 100%
+    # =========================================================================
+    def add_h1(text, page_break=False):
+        p = doc.add_paragraph(style="Heading 1")
+        p.paragraph_format.page_break_before = page_break
+        p.paragraph_format.keep_with_next = True
         p.paragraph_format.space_before = Pt(14)
         p.paragraph_format.space_after = Pt(6)
-        p.paragraph_format.keep_with_next = True
         r = p.add_run(text)
-        r.font.name = 'Times New Roman'
-        r.font.size = Pt(14)
+        r.font.name = "Times New Roman"
+        r.font.size = Pt(17)
         r.font.bold = True
-        r.font.color.rgb = RGBColor(30, 58, 138) # #1E3A8A Deep Navy Blue
+        r.font.color.rgb = RGBColor(0, 0, 0)
         return p
 
     def add_h2(text):
-        p = doc.add_paragraph()
+        p = doc.add_paragraph(style="Heading 2")
+        p.paragraph_format.keep_with_next = True
         p.paragraph_format.space_before = Pt(10)
         p.paragraph_format.space_after = Pt(4)
-        p.paragraph_format.keep_with_next = True
         r = p.add_run(text)
-        r.font.name = 'Times New Roman'
-        r.font.size = Pt(13)
-        r.font.bold = True
-        r.font.color.rgb = RGBColor(15, 23, 42)
+        r.font.name = "Times New Roman"
+        r.font.size = Pt(15)
+        r.font.bold = False
+        r.font.color.rgb = RGBColor(0, 0, 0)
         return p
 
     def add_h3(text):
-        p = doc.add_paragraph()
-        p.paragraph_format.space_before = Pt(6)
-        p.paragraph_format.space_after = Pt(2)
+        p = doc.add_paragraph(style="Heading 3")
         p.paragraph_format.keep_with_next = True
+        p.paragraph_format.space_before = Pt(8)
+        p.paragraph_format.space_after = Pt(4)
         r = p.add_run(text)
-        r.font.name = 'Times New Roman'
-        r.font.size = Pt(12)
-        r.font.bold = True
-        r.font.color.rgb = RGBColor(51, 65, 85)
+        r.font.name = "Times New Roman"
+        r.font.size = Pt(13.5)
+        r.font.bold = False
+        r.font.color.rgb = RGBColor(0, 0, 0)
+        return p
+
+    # Configure TOC 1 and TOC 2 styles so the entire TOC fits cleanly on Page 3
+    for style_name in ["toc 1", "toc 2", "toc 3"]:
+        if style_name in doc.styles:
+            st = doc.styles[style_name]
+            st.paragraph_format.space_before = Pt(0)
+            st.paragraph_format.space_after = Pt(2)
+            st.paragraph_format.line_spacing = 1.05
+
+    def add_p(text):
+        p = doc.add_paragraph(style="Normal")
+        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        p.paragraph_format.space_before = Pt(0)
+        p.paragraph_format.space_after = Pt(6)
+        p.paragraph_format.line_spacing = 1.08
+        r = p.add_run(text)
+        r.font.name = "Times New Roman"
+        r.font.size = Pt(13)
+        r.font.color.rgb = RGBColor(0, 0, 0)
         return p
 
     def add_code(code_text):
-        table = doc.add_table(rows=1, cols=1)
+        p = doc.add_paragraph(style="Normal")
+        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        p.paragraph_format.space_before = Pt(4)
+        p.paragraph_format.space_after = Pt(7)
+        p.paragraph_format.line_spacing = 1.08
+        p.paragraph_format.keep_together = True
+        pPr = p._p.get_or_add_pPr()
+        shd = parse_xml(f'<w:shd {nsdecls("w")} w:val="clear" w:color="auto" w:fill="F2F2F2"/>')
+        pPr.append(shd)
+        lines = code_text.strip().split("\n")
+        for idx, line in enumerate(lines):
+            r = p.add_run(line)
+            r.font.name = "Consolas"
+            r.font.size = Pt(9)
+            r.font.color.rgb = RGBColor(0, 0, 0)
+            if idx < len(lines) - 1:
+                r.add_break()
+        return p
+
+    def add_figure(img_filename, caption_text, width_inches=6.2):
+        abs_path = os.path.join(EVIDENCE_DIR, img_filename) if not os.path.isabs(img_filename) else img_filename
+        if not os.path.exists(abs_path):
+            print(f"WARNING: Missing image {abs_path}")
+            return
+        p_img = doc.add_paragraph(style="Normal")
+        p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p_img.paragraph_format.space_before = Pt(4)
+        p_img.paragraph_format.space_after = Pt(2)
+        p_img.paragraph_format.keep_with_next = True
+        run_img = p_img.add_run()
+        run_img.add_picture(abs_path, width=Inches(width_inches))
+
+        p_cap = doc.add_paragraph(style="Normal")
+        p_cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p_cap.paragraph_format.space_before = Pt(2)
+        p_cap.paragraph_format.space_after = Pt(8)
+        r_cap = p_cap.add_run(caption_text)
+        r_cap.font.name = "Times New Roman"
+        r_cap.font.size = Pt(11)
+        r_cap.font.italic = True
+        r_cap.font.color.rgb = RGBColor(0, 0, 0)
+
+    def add_table(headers, rows, col_widths):
+        table = doc.add_table(rows=len(rows) + 1, cols=len(headers))
+        table.style = "Table Grid"
         table.alignment = WD_TABLE_ALIGNMENT.CENTER
-        cell = table.rows[0].cells[0]
-        cell.width = Inches(6.5)
-        set_cell_background(cell, "F1F5F9")
-        set_cell_margins(cell, top=100, bottom=100, left=150, right=150)
-        
-        # Border
-        tcPr = cell._tc.get_or_add_tcPr()
+        table.autofit = False
+
+        tblPr = table._tbl.tblPr
         borders = parse_xml(
-            f'<w:tcBorders {nsdecls("w")}>'
-            f'<w:top w:val="single" w:sz="4" w:space="0" w:color="CBD5E1"/>'
-            f'<w:left w:val="single" w:sz="16" w:space="0" w:color="2563EB"/>'
-            f'<w:bottom w:val="single" w:sz="4" w:space="0" w:color="CBD5E1"/>'
-            f'<w:right w:val="single" w:sz="4" w:space="0" w:color="CBD5E1"/>'
-            f'</w:tcBorders>'
+            f'<w:tblBorders {nsdecls("w")}>'
+            f'<w:top w:val="single" w:sz="4" w:space="0" w:color="666666"/>'
+            f'<w:left w:val="single" w:sz="4" w:space="0" w:color="666666"/>'
+            f'<w:bottom w:val="single" w:sz="4" w:space="0" w:color="666666"/>'
+            f'<w:right w:val="single" w:sz="4" w:space="0" w:color="666666"/>'
+            f'<w:insideH w:val="single" w:sz="4" w:space="0" w:color="666666"/>'
+            f'<w:insideV w:val="single" w:sz="4" w:space="0" w:color="666666"/>'
+            f'</w:tblBorders>'
         )
-        tcPr.append(borders)
-        
-        p = cell.paragraphs[0]
-        p.paragraph_format.space_before = Pt(2)
-        p.paragraph_format.space_after = Pt(2)
-        p.paragraph_format.line_spacing = 1.1
-        r = p.add_run(code_text)
-        r.font.name = 'Consolas'
-        r.font.size = Pt(9.5)
-        r.font.color.rgb = RGBColor(30, 41, 59)
-        doc.add_paragraph().paragraph_format.space_after = Pt(2)
-
-    def add_image_figure(img_rel_path, caption_text, width_inches=6.2):
-        abs_path = os.path.join(EVIDENCE_DIR, img_rel_path) if not os.path.isabs(img_rel_path) else img_rel_path
-        if os.path.exists(abs_path):
-            p_img = doc.add_paragraph()
-            p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            p_img.paragraph_format.space_before = Pt(6)
-            p_img.paragraph_format.space_after = Pt(2)
-            p_img.paragraph_format.keep_with_next = True
-            run = p_img.add_run()
-            run.add_picture(abs_path, width=Inches(width_inches))
-            
-            p_cap = doc.add_paragraph()
-            p_cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            p_cap.paragraph_format.space_before = Pt(2)
-            p_cap.paragraph_format.space_after = Pt(8)
-            r_cap = p_cap.add_run(caption_text)
-            r_cap.font.name = 'Times New Roman'
-            r_cap.font.size = Pt(10.5)
-            r_cap.font.bold = True
-            r_cap.font.italic = True
-            r_cap.font.color.rgb = RGBColor(30, 58, 138)
-        else:
-            print(f"Warning: Image file not found at {abs_path}")
-
-    def add_styled_table(headers, data, col_widths=None):
-        table = doc.add_table(rows=len(data) + 1, cols=len(headers))
-        table.alignment = WD_TABLE_ALIGNMENT.CENTER
-        set_table_borders(table, color="94A3B8", sz="4", val="single")
+        tblPr.append(borders)
 
         # Header Row
-        hdr_cells = table.rows[0].cells
-        for i, title in enumerate(headers):
-            hdr_cells[i].text = title
-            set_cell_background(hdr_cells[i], "1E3A8A")
-            set_cell_margins(hdr_cells[i], top=120, bottom=120, left=140, right=140)
-            p = hdr_cells[i].paragraphs[0]
-            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        hdr_row = table.rows[0]
+        trPr = hdr_row._tr.get_or_add_trPr()
+        trPr.append(parse_xml(f'<w:tblHeader {nsdecls("w")}/>'))
+        trPr.append(parse_xml(f'<w:cantSplit {nsdecls("w")}/>'))
+        for c_idx, h_text in enumerate(headers):
+            cell = hdr_row.cells[c_idx]
+            cell.width = Inches(col_widths[c_idx])
+            tcPr = cell._tc.get_or_add_tcPr()
+            tcPr.append(parse_xml(f'<w:shd {nsdecls("w")} w:val="clear" w:color="auto" w:fill="F2F2F2"/>'))
+            tcPr.append(parse_xml(
+                f'<w:tcMar {nsdecls("w")}>'
+                f'<w:top w:w="80" w:type="dxa"/><w:bottom w:w="80" w:type="dxa"/>'
+                f'<w:left w:w="120" w:type="dxa"/><w:right w:w="120" w:type="dxa"/>'
+                f'</w:tcMar>'
+            ))
+            p = cell.paragraphs[0]
+            p.alignment = WD_ALIGN_PARAGRAPH.LEFT
             p.paragraph_format.space_before = Pt(2)
             p.paragraph_format.space_after = Pt(2)
-            for r in p.runs:
-                r.font.name = 'Times New Roman'
-                r.font.size = Pt(11)
-                r.font.bold = True
-                r.font.color.rgb = RGBColor(255, 255, 255)
+            p.paragraph_format.line_spacing = 1.08
+            r = p.add_run(str(h_text))
+            r.font.name = "Times New Roman"
+            r.font.size = Pt(11.5)
+            r.font.bold = True
+            r.font.color.rgb = RGBColor(0, 0, 0)
 
         # Data Rows
-        for r_idx, row_data in enumerate(data):
-            row_cells = table.rows[r_idx + 1].cells
-            bg_color = "F8FAFC" if r_idx % 2 == 1 else "FFFFFF"
-            for c_idx, cell_value in enumerate(row_data):
-                row_cells[c_idx].text = str(cell_value)
-                set_cell_background(row_cells[c_idx], bg_color)
-                set_cell_margins(row_cells[c_idx], top=80, bottom=80, left=120, right=120)
-                p = row_cells[c_idx].paragraphs[0]
-                p.alignment = WD_ALIGN_PARAGRAPH.LEFT if c_idx > 0 else WD_ALIGN_PARAGRAPH.CENTER
+        for r_idx, row_data in enumerate(rows):
+            row = table.rows[r_idx + 1]
+            r_trPr = row._tr.get_or_add_trPr()
+            r_trPr.append(parse_xml(f'<w:cantSplit {nsdecls("w")}/>'))
+            for c_idx, val in enumerate(row_data):
+                cell = row.cells[c_idx]
+                cell.width = Inches(col_widths[c_idx])
+                tcPr = cell._tc.get_or_add_tcPr()
+                tcPr.append(parse_xml(
+                    f'<w:tcMar {nsdecls("w")}>'
+                    f'<w:top w:w="70" w:type="dxa"/><w:bottom w:w="70" w:type="dxa"/>'
+                    f'<w:left w:w="120" w:type="dxa"/><w:right w:w="120" w:type="dxa"/>'
+                    f'</w:tcMar>'
+                ))
+                p = cell.paragraphs[0]
+                p.alignment = WD_ALIGN_PARAGRAPH.LEFT
                 p.paragraph_format.space_before = Pt(2)
                 p.paragraph_format.space_after = Pt(2)
-                p.paragraph_format.line_spacing = 1.15
-                for r in p.runs:
-                    r.font.name = 'Times New Roman'
-                    r.font.size = Pt(10.5)
-                    r.font.color.rgb = RGBColor(15, 23, 42)
+                p.paragraph_format.line_spacing = 1.08
+                r = p.add_run(str(val))
+                r.font.name = "Times New Roman"
+                r.font.size = Pt(11.5)
+                r.font.bold = False
+                r.font.color.rgb = RGBColor(0, 0, 0)
 
-        # Apply Column Widths if specified
-        if col_widths:
-            for row in table.rows:
-                for c_idx, w in enumerate(col_widths):
-                    row.cells[c_idx].width = Inches(w)
-
-        doc.add_paragraph().paragraph_format.space_after = Pt(4)
         return table
 
-    def add_callout(title, text):
-        table = doc.add_table(rows=1, cols=1)
-        table.alignment = WD_TABLE_ALIGNMENT.CENTER
-        cell = table.rows[0].cells[0]
-        cell.width = Inches(6.5)
-        set_cell_background(cell, "EFF6FF")
-        set_cell_margins(cell, top=100, bottom=100, left=150, right=150)
-        
-        tcPr = cell._tc.get_or_add_tcPr()
-        borders = parse_xml(
-            f'<w:tcBorders {nsdecls("w")}>'
-            f'<w:top w:val="none"/>'
-            f'<w:left w:val="single" w:sz="24" w:space="0" w:color="2563EB"/>'
-            f'<w:bottom w:val="none"/>'
-            f'<w:right w:val="none"/>'
-            f'</w:tcBorders>'
-        )
-        tcPr.append(borders)
-        
-        p = cell.paragraphs[0]
-        p.paragraph_format.space_before = Pt(2)
-        p.paragraph_format.space_after = Pt(2)
-        p.paragraph_format.line_spacing = 1.15
-        r_title = p.add_run(f"📌 {title}: ")
-        r_title.font.name = 'Times New Roman'
-        r_title.font.size = Pt(10.5)
-        r_title.font.bold = True
-        r_title.font.color.rgb = RGBColor(30, 58, 138)
-        
-        r_text = p.add_run(text)
-        r_text.font.name = 'Times New Roman'
-        r_text.font.size = Pt(10.5)
-        r_text.font.color.rgb = RGBColor(30, 41, 59)
-        doc.add_paragraph().paragraph_format.space_after = Pt(2)
+    # =========================================================================
+    # PHẦN 1 GIỚI THIỆU TỔNG QUAN HỆ THỐNG
+    # =========================================================================
+    add_h1("PHẦN 1 GIỚI THIỆU TỔNG QUAN HỆ THỐNG", page_break=False)
 
-    print("Helper functions initialized. Generating content...")
-
-    # ==========================================
-    # 1. COVER PAGE (TRANG BÌA)
-    # ==========================================
-    cover_table = doc.add_table(rows=11, cols=2)
-    cover_table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    set_cover_borders(cover_table, color="1E3A8A", sz="16", val="double")
-
-    # Set row heights matching sample
-    cover_table.rows[0].height = Pt(4)
-    cover_table.rows[1].height = Pt(45)
-    cover_table.rows[2].height = Pt(170)
-    cover_table.rows[3].height = Pt(55)
-    cover_table.rows[4].height = Pt(10)
-    cover_table.rows[5].height = Pt(25)
-    cover_table.rows[6].height = Pt(55)
-    cover_table.rows[7].height = Pt(15)
-    cover_table.rows[8].height = Pt(22)
-    cover_table.rows[9].height = Pt(22)
-    cover_table.rows[10].height = Pt(185)
-
-    # Merge top rows across columns
-    cover_table.rows[0].cells[0].merge(cover_table.rows[0].cells[1])
-    cover_table.rows[1].cells[0].merge(cover_table.rows[1].cells[1])
-    cover_table.rows[2].cells[0].merge(cover_table.rows[2].cells[1])
-    cover_table.rows[3].cells[0].merge(cover_table.rows[3].cells[1])
-    cover_table.rows[4].cells[0].merge(cover_table.rows[4].cells[1])
-    cover_table.rows[5].cells[0].merge(cover_table.rows[5].cells[1])
-    cover_table.rows[6].cells[0].merge(cover_table.rows[6].cells[1])
-    cover_table.rows[7].cells[0].merge(cover_table.rows[7].cells[1])
-
-    # Row 1: University Header
-    p_univ = cover_table.rows[1].cells[0].paragraphs[0]
-    p_univ.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r1 = p_univ.add_run("TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN VÀ TRUYỀN THÔNG\n")
-    r1.font.name = 'Times New Roman'
-    r1.font.size = Pt(13)
-    r1.font.bold = False
-    r2 = p_univ.add_run("KHOA CÔNG NGHỆ THÔNG TIN")
-    r2.font.name = 'Times New Roman'
-    r2.font.size = Pt(13.5)
-    r2.font.bold = True
-
-    # Row 2: Logo ICTU
-    p_logo = cover_table.rows[2].cells[0].paragraphs[0]
-    p_logo.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    if os.path.exists(LOGO_PATH):
-        p_logo.add_run().add_picture(LOGO_PATH, width=Inches(1.85))
-
-    # Row 3: Report Title
-    p_rep = cover_table.rows[3].cells[0].paragraphs[0]
-    p_rep.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r_rep1 = p_rep.add_run("BÁO CÁO\n")
-    r_rep1.font.name = 'Times New Roman'
-    r_rep1.font.size = Pt(20)
-    r_rep1.font.bold = True
-    r_rep1.font.color.rgb = RGBColor(30, 58, 138)
-    r_rep2 = p_rep.add_run("HỌC PHẦN TRIỂN KHAI & QUẢN TRỊ HỆ THỐNG PHẦN MỀM")
-    r_rep2.font.name = 'Times New Roman'
-    r_rep2.font.size = Pt(13.5)
-    r_rep2.font.bold = True
-
-    # Row 5: Topic Label
-    p_top = cover_table.rows[5].cells[0].paragraphs[0]
-    p_top.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r_top = p_top.add_run("Đề tài:")
-    r_top.font.name = 'Times New Roman'
-    r_top.font.size = Pt(14)
-    r_top.font.bold = True
-
-    # Row 6: Topic Name
-    p_tn = cover_table.rows[6].cells[0].paragraphs[0]
-    p_tn.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r_tn = p_tn.add_run("Hệ thống Quản lý Dự án (Project Management)")
-    r_tn.font.name = 'Times New Roman'
-    r_tn.font.size = Pt(16)
-    r_tn.font.bold = True
-    r_tn.font.color.rgb = RGBColor(185, 28, 28) # Accent deep red
-
-    # Row 8: Student
-    p_s1 = cover_table.rows[8].cells[0].paragraphs[0]
-    p_s1.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    r_s1 = p_s1.add_run("    Sinh viên thực hiện :")
-    r_s1.font.name = 'Times New Roman'
-    r_s1.font.size = Pt(13)
-    r_s1.font.bold = True
-    p_s2 = cover_table.rows[8].cells[1].paragraphs[0]
-    p_s2.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    r_s2 = p_s2.add_run("Đinh Gia Bảo")
-    r_s2.font.name = 'Times New Roman'
-    r_s2.font.size = Pt(13)
-    r_s2.font.bold = True
-
-    # Row 9: Student ID
-    p_id1 = cover_table.rows[9].cells[0].paragraphs[0]
-    p_id1.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    r_id1 = p_id1.add_run("    Mã sinh viên :")
-    r_id1.font.name = 'Times New Roman'
-    r_id1.font.size = Pt(13)
-    r_id1.font.bold = True
-    p_id2 = cover_table.rows[9].cells[1].paragraphs[0]
-    p_id2.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    r_id2 = p_id2.add_run("DTC245220019")
-    r_id2.font.name = 'Times New Roman'
-    r_id2.font.size = Pt(13)
-    r_id2.font.bold = True
-
-    # Row 10: Class & Instructor
-    cover_table.rows[10].cells[0].merge(cover_table.rows[10].cells[1])
-    p_inst = cover_table.rows[10].cells[0].paragraphs[0]
-    p_inst.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    r_c1 = p_inst.add_run("    Lớp : ")
-    r_c1.font.name = 'Times New Roman'
-    r_c1.font.size = Pt(13)
-    r_c1.font.bold = True
-    r_c2 = p_inst.add_run("ATTT K23A\n\n")
-    r_c2.font.name = 'Times New Roman'
-    r_c2.font.size = Pt(13)
-    r_c2.font.bold = True
-    r_i1 = p_inst.add_run("    Giảng viên hướng dẫn : ")
-    r_i1.font.name = 'Times New Roman'
-    r_i1.font.size = Pt(13)
-    r_i1.font.bold = True
-    r_i2 = p_inst.add_run("Nguyễn Anh Chuyên")
-    r_i2.font.name = 'Times New Roman'
-    r_i2.font.size = Pt(13)
-    r_i2.font.bold = True
-
-    # Cover Footer
-    p_cf = doc.add_paragraph()
-    p_cf.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_cf.paragraph_format.space_before = Pt(14)
-    r_cf = p_cf.add_run("THÁI NGUYÊN, NĂM 2026")
-    r_cf.font.name = 'Times New Roman'
-    r_cf.font.size = Pt(13)
-    r_cf.font.bold = True
-
-    doc.add_page_break()
-
-    # ==========================================
-    # 2. LỜI NÓI ĐẦU
-    # ==========================================
-    p_pre = doc.add_paragraph()
-    p_pre.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_pre.paragraph_format.space_before = Pt(12)
-    p_pre.paragraph_format.space_after = Pt(12)
-    r_pre = p_pre.add_run("LỜI NÓI ĐẦU")
-    r_pre.font.name = 'Times New Roman'
-    r_pre.font.size = Pt(15)
-    r_pre.font.bold = True
-    r_pre.font.color.rgb = RGBColor(30, 58, 138)
-
-    add_p("Báo cáo trình bày toàn diện kết quả triển khai Đề 14: “Hệ thống Quản lý Dự án (Project Management)” của sinh viên Đinh Gia Bảo, thuộc học phần Triển khai và Quản trị Hệ thống Phần mềm. Ứng dụng cung cấp các phân hệ chức năng thực tế phục vụ quản lý danh mục dự án, phân công và theo dõi tiến độ công việc (tasks), quản trị thành viên (members), nhật ký kiểm toán (audit logs) và phân quyền quản trị người dùng. Toàn bộ dữ liệu nghiệp vụ được lưu trữ bền vững trong hệ quản trị cơ sở dữ liệu quan hệ PostgreSQL 16 và được quản lý trực quan thông qua công cụ pgAdmin 4.")
-    add_p("Trọng tâm cốt lõi của đồ án là chứng minh ứng dụng không chỉ hoạt động tốt ở tầng nghiệp vụ mà còn được vận hành trên nền tảng hạ tầng container hóa đạt chuẩn doanh nghiệp. Toàn bộ các dịch vụ được đóng gói và điều phối thống nhất bằng Docker Compose, tiếp nhận lưu lượng mạng an toàn qua Nginx reverse proxy với HTTPS tự ký và các tiêu chuẩn bảo mật HTTP security headers khắt khe. Hệ thống quan sát (observability) toàn diện được thiết lập với Prometheus và Grafana để giám sát thời gian thực các chỉ số tài nguyên của container, web server Nginx và database PostgreSQL. Đồng thời, giải pháp thu thập nhật ký tập trung với Loki và Promtail cho phép truy vết mọi hành vi hệ thống, lọc lỗi HTTP và phát hiện các sự kiện an ninh thông qua ngôn ngữ truy vấn LogQL chuyên sâu.")
-    add_p("Bên cạnh đó, các biện pháp gia cố bảo mật (hardening) nhiều lớp bao gồm khởi chạy container dưới quyền non-root (UID 1000), bật hệ thống tệp chỉ đọc (read-only rootfs), loại bỏ toàn bộ Linux Capabilities nguy hiểm (cap_drop: ALL), cô lập hoàn toàn mạng cơ sở dữ liệu (internal network) và áp dụng nguyên tắc đặc quyền tối thiểu (least privilege) đối với tài khoản cơ sở dữ liệu pm_app đã được kiểm chứng bằng thực nghiệm chi tiết. Dữ liệu và kết quả kiểm chứng trong báo cáo được thu thập thực tế vào ngày 21 tháng 10 năm 2026 trên máy chủ Windows 11 chạy Docker Desktop Linux containers.")
-    add_p("Em xin bày tỏ lòng biết ơn sâu sắc tới thầy Nguyễn Anh Chuyên đã tận tâm hướng dẫn, truyền đạt kiến thức chuyên môn quý báu và định hướng phương pháp triển khai quản trị hệ thống bài bản trong suốt học phần. Qua đồ án thực tiễn này, em đã có cơ hội củng cố vững chắc kỹ năng đóng gói ứng dụng, thiết lập hạ tầng giám sát, quản lý mã nguồn chuyên nghiệp trên GitHub và kiểm thử an toàn hệ thống.")
-    
-    p_sign = doc.add_paragraph()
-    p_sign.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    p_sign.paragraph_format.space_before = Pt(12)
-    p_sign.paragraph_format.space_after = Pt(2)
-    r_s1 = p_sign.add_run("Sinh viên thực hiện\n")
-    r_s1.font.bold = True
-    r_s2 = p_sign.add_run("Đinh Gia Bảo")
-    r_s2.font.bold = True
-    r_s2.font.size = Pt(13)
-
-    doc.add_page_break()
-
-    # ==========================================
-    # 3. MỤC LỤC
-    # ==========================================
-    p_toc_title = doc.add_paragraph()
-    p_toc_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_toc_title.paragraph_format.space_before = Pt(8)
-    p_toc_title.paragraph_format.space_after = Pt(12)
-    r_tt = p_toc_title.add_run("MỤC LỤC")
-    r_tt.font.name = 'Times New Roman'
-    r_tt.font.size = Pt(15)
-    r_tt.font.bold = True
-    r_tt.font.color.rgb = RGBColor(30, 58, 138)
-
-    # Word native TOC field
-    p_toc_fld = doc.add_paragraph()
-    p_toc_fld.paragraph_format.space_after = Pt(2)
-    run_toc = p_toc_fld.add_run()
-    fldChar1 = parse_xml(r'<w:fldChar %s w:fldCharType="begin"/>' % nsdecls('w'))
-    instrText = parse_xml(r'<w:instrText %s xml:space="preserve"> TOC \o "1-3" \h \z \u </w:instrText>' % nsdecls('w'))
-    fldChar2 = parse_xml(r'<w:fldChar %s w:fldCharType="separate"/>' % nsdecls('w'))
-    fldChar3 = parse_xml(r'<w:fldChar %s w:fldCharType="end"/>' % nsdecls('w'))
-    run_toc._r.append(fldChar1)
-    run_toc._r.append(instrText)
-    run_toc._r.append(fldChar2)
-    run_toc._r.append(fldChar3)
-
-    # Manual TOC entries for immediate visual presentation if opened without updating fields
-    toc_items = [
-        ("PHẦN 1: GIỚI THIỆU TỔNG QUAN HỆ THỐNG", 1, True),
-        ("1.1 Mục tiêu và phạm vi đề tài", 1, False),
-        ("1.2 Môi trường thực nghiệm", 2, False),
-        ("1.3 Kiến trúc và luồng hoạt động của hệ thống", 3, False),
-        ("1.4 Các dịch vụ mạng và dữ liệu lưu trữ bền vững", 4, False),
-        ("PHẦN 2: QUẢN LÝ MÃ NGUỒN VÀ TRIỂN KHAI", 5, True),
-        ("2.1 Repository và cấu trúc mã nguồn trên GitHub", 5, False),
-        ("2.2 Ba commit mốc kỹ thuật và quy trình quản trị thay đổi", 6, False),
-        ("2.3 Đóng gói và điều phối dịch vụ bằng Docker Compose", 7, False),
-        ("2.4 Thiết kế cơ sở dữ liệu PostgreSQL của ứng dụng", 9, False),
-        ("2.5 Giao diện ứng dụng và các chức năng cốt lõi", 10, False),
-        ("2.6 Quản lý công việc, thành viên và nhật ký kiểm toán", 12, False),
-        ("2.7 Quản trị PostgreSQL bằng công cụ pgAdmin 4", 14, False),
-        ("PHẦN 3: NGINX VÀ HARDENING HỆ THỐNG", 15, True),
-        ("3.1 Cấu hình Nginx Reverse Proxy và HTTP Security Headers", 15, False),
-        ("3.2 Thiết lập HTTPS tự ký và bảo mật Session Cookie", 16, False),
-        ("3.3 Cơ chế bảo vệ tài khoản, chống CSRF và Rate Limiting", 17, False),
-        ("3.4 Hardening Container, cô lập mạng và phân quyền Database", 18, False),
-        ("PHẦN 4: GIÁM SÁT VÀ LOG TẬP TRUNG", 20, True),
-        ("4.1 Cấu hình Prometheus và các Exporters", 20, False),
-        ("4.2 Dashboard Grafana và phân tích dữ liệu tài nguyên", 21, False),
-        ("4.3 Giám sát Nginx, PostgreSQL và kiểm tra tạo tải", 22, False),
-        ("4.4 Thiết kế hệ thống thu thập log tập trung Loki và Promtail", 23, False),
-        ("4.5 Phương pháp tạo lưu lượng và kiểm chứng log", 24, False),
-        ("4.6 Truy vấn LogQL 1: Xem log truy cập Nginx", 24, False),
-        ("4.7 Truy vấn LogQL 2: Lọc request lỗi HTTP từ 400 trở lên", 25, False),
-        ("4.8 Truy vấn LogQL 3: Tìm sự kiện đăng nhập thất bại", 26, False),
-        ("PHẦN 5: KIỂM THỬ VẬN HÀNH VÀ ĐỐI CHIẾU", 27, True),
-        ("5.1 Kết quả kiểm thử chức năng và tích hợp hệ thống", 27, False),
-        ("5.2 Quy trình sao lưu và phục hồi dữ liệu độc lập", 28, False),
-        ("5.3 Các sự cố kỹ thuật gặp phải và giải pháp khắc phục", 29, False),
-        ("5.4 Bảng đối chiếu tiêu chí đánh giá và kịch bản demo", 30, False),
-        ("KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN", 32, True),
-        ("TÀI LIỆU THAM KHẢO", 33, True)
-    ]
-
-    for item, page_num, is_major in toc_items:
-        p_item = doc.add_paragraph()
-        p_item.paragraph_format.space_before = Pt(3 if is_major else 1)
-        p_item.paragraph_format.space_after = Pt(2)
-        p_item.paragraph_format.line_spacing = 1.15
-        r_txt = p_item.add_run(item)
-        r_txt.font.name = 'Times New Roman'
-        r_txt.font.size = Pt(11 if is_major else 10.5)
-        r_txt.font.bold = is_major
-        if is_major:
-            r_txt.font.color.rgb = RGBColor(30, 58, 138)
-        
-        # Leader dots and page number
-        r_tab = p_item.add_run(f" {'·' * max(5, int(65 - len(item)*1.1))} {page_num}")
-        r_tab.font.name = 'Times New Roman'
-        r_tab.font.size = Pt(10)
-        r_tab.font.color.rgb = RGBColor(100, 116, 139)
-
-    doc.add_page_break()
-
-    # ==========================================
-    # PHẦN 1: GIỚI THIỆU TỔNG QUAN HỆ THỐNG
-    # ==========================================
-    add_h1("PHẦN 1: GIỚI THIỆU TỔNG QUAN HỆ THỐNG")
-    
     add_h2("1.1 Mục tiêu và phạm vi đề tài")
-    add_p("Trong môi trường quản trị công nghệ hiện đại, việc số hóa quy trình quản lý dự án đóng vai trò then chốt giúp các nhóm phát triển phần mềm theo dõi sát sao tiến độ công việc, tối ưu hóa việc phân bổ nhân sự và đảm bảo chất lượng chuyển giao. Đề tài số 14 “Hệ thống Quản lý Dự án (Project Management)” tập trung xây dựng một giải pháp phần mềm web hoàn chỉnh cho phép quản trị dự án, quản lý công việc theo trạng thái và phân công trách nhiệm cho từng thành viên trong tổ chức.")
-    add_p("Mục tiêu kỹ thuật toàn diện của đồ án gồm:")
-    add_p("1. Quản lý toàn bộ mã nguồn, cấu hình hạ tầng và scripts tự động hóa trên GitHub repository với lịch sử commit rõ ràng, cấu trúc mô-đun khoa học và tài liệu hướng dẫn tái lập hệ thống chi tiết.")
-    add_p("2. Đóng gói và vận hành đồng bộ ứng dụng Node.js Express, cơ sở dữ liệu PostgreSQL 16 và công cụ quản trị pgAdmin 4 trên nền tảng Docker Compose.")
-    add_p("3. Triển khai Nginx reverse proxy bảo mật cao, hỗ trợ TLS 1.2/1.3 tự ký, tự động chuyển hướng HTTP sang HTTPS, thiết lập đầy đủ các HTTP security headers và bảo vệ cookie phiên làm việc.")
-    add_p("4. Xây dựng hệ thống giám sát toàn diện với Prometheus v3.2.1 và Grafana v11.5.0, cấu hình tự động nạp (provisioning) datasources và dashboard trực quan hóa các chỉ số hoạt động của container, Nginx và PostgreSQL.")
-    add_p("5. Thiết lập hệ thống quản lý nhật ký tập trung với Loki v3.4.2 và Promtail v3.4.2, thu gom log có cấu trúc JSON từ ứng dụng và Nginx, thực thi ít nhất 3 truy vấn LogQL phục vụ điều tra sự cố và giám sát an ninh.")
-    add_p("6. Áp dụng ít nhất 4 biện pháp hardening chuyên sâu: chạy non-root user, filesystem chỉ đọc, cô lập mạng nội bộ, quản lý bí mật ngoài Git, loại bỏ Linux capabilities nguy hiểm và thiết lập nguyên tắc quyền tối thiểu trên cơ sở dữ liệu.")
+    add_p("Hệ thống Quản lý Dự án (Project Management) là công cụ trung tâm giúp các nhóm phát triển phần mềm tổ chức danh mục dự án, phân công công việc (tasks), quản lý nhân sự tham gia (members) và theo dõi tiến độ hoàn thành theo thời gian thực. Đề tài xây dựng một ứng dụng web hoàn chỉnh có cơ chế xác thực người dùng, bảo vệ các thao tác ghi dữ liệu bằng phiên đăng nhập cùng CSRF token, đồng thời triển khai đồng bộ với hạ tầng quản trị cơ sở dữ liệu, giám sát tài nguyên và thu thập nhật ký tập trung.")
+    add_p("Mục tiêu kỹ thuật gồm quản lý toàn bộ mã nguồn và cấu hình trên GitHub; đóng gói và khởi chạy ứng dụng, PostgreSQL 16 cùng pgAdmin 4 bằng Docker Compose; tiếp nhận truy cập qua Nginx reverse proxy; giám sát container, web server và database bằng Prometheus kết hợp Grafana; thu gom nhật ký bằng Loki và Promtail; áp dụng nhiều lớp hardening bảo mật. Tất cả kết quả được kiểm chứng bằng thao tác thực tế, ảnh chụp từ hệ thống đang chạy và tài liệu hướng dẫn tái lập.")
+    add_p("Ứng dụng sử dụng Node.js 22 LTS, Express và EJS, kết nối trực tiếp tới PostgreSQL 16 thông qua thư viện pg. Lựa chọn này đáp ứng đầy đủ yêu cầu bắt buộc của Đề 14 về phần mềm quản lý dự án, task, thành viên sử dụng cơ sở dữ liệu PostgreSQL và công cụ quản trị pgAdmin. Các framework như NestJS hoặc Django trong đề bài là gợi ý ngăn xếp công nghệ; toàn bộ yêu cầu kỹ thuật về kiến trúc container, reverse proxy, monitoring, logging và hardening được giữ nguyên và thực hiện đầy đủ.")
 
-    add_callout("Ghi chú về ngăn xếp công nghệ", "Đề bài đưa ra gợi ý công nghệ Node.js (Express/Nest) hoặc Django + PostgreSQL + pgAdmin + Nginx + Prometheus + Grafana + Loki. Đồ án lựa chọn Node.js 22 LTS kết hợp Express và EJS nhằm xây dựng ứng dụng quản lý dự án tinh gọn, hiệu năng cao, phản hồi nhanh và dễ dàng tích hợp các lớp bảo mật middleware.")
-
-    headers_1_1 = ["Yêu cầu đề bài", "Giải pháp triển khai trong hệ thống", "Kết quả kiểm chứng"]
-    data_1_1 = [
-        ["Quản lý mã nguồn GitHub", "Repository công khai, tài liệu README chi tiết, 3 commit mốc kỹ thuật rõ ràng", "Đạt - Đã push origin/main"],
-        ["Phần mềm cần triển khai", "Ứng dụng Quản lý Dự án, phân công Task, quản trị Thành viên, Audit Logs", "Đạt - Đầy đủ CRUD & Dashboard"],
-        ["Cơ sở dữ liệu & Công cụ", "PostgreSQL 16 Alpine + pgAdmin 4 v8.14 kết nối mạng nội bộ", "Đạt - Dữ liệu bền vững qua named volumes"],
-        ["Nginx Reverse Proxy", "Nginx 1.27 Alpine, SSL RSA 3072 bit, chuyển hướng HTTP 8080 -> 8443, Security Headers", "Đạt - Nginx syntax OK, SSL active"],
-        ["Hệ thống Giám sát", "Prometheus v3.2.1 scrape 4 targets; Grafana v11.5.0 auto-provisioning dashboard", "Đạt - 4/4 Targets UP (100%)"],
-        ["Hệ thống Nhật ký", "Loki v3.4.2 + Promtail v3.4.2, log JSON có cấu trúc, 3 truy vấn LogQL chuyên sâu", "Đạt - Trả về dữ liệu log thực"],
-        ["Hardening bảo mật", "Non-root (UID 1000), read-only rootfs, cap_drop ALL, internal DB network, least privilege", "Đạt - Xác minh qua Docker API"]
-    ]
-    add_styled_table(headers_1_1, data_1_1, [1.6, 3.2, 1.7])
-    add_p("Bảng 1.1: Đối chiếu yêu cầu đề bài và giải pháp triển khai hệ thống", bold=True, italic=True, align=WD_ALIGN_PARAGRAPH.CENTER)
+    add_table(
+        ["Yêu cầu", "Cách đáp ứng trong hệ thống"],
+        [
+            ["GitHub", "Repository công khai, README hướng dẫn tái lập, ba commit mốc kỹ thuật và commit bổ sung minh chứng"],
+            ["Ứng dụng và dữ liệu", "Quản lý dự án, công việc (tasks), thành viên (members), audit logs, PostgreSQL 16 và pgAdmin 4"],
+            ["Reverse proxy", "Nginx HTTP 8080 chuyển hướng 301 sang HTTPS 8443 tự ký, đầy đủ security headers"],
+            ["Monitoring", "cAdvisor 0.55.1, Nginx/PostgreSQL exporters, Prometheus v3.2.1 và Grafana v11.5.0"],
+            ["Logging", "Log JSON có cấu trúc của app và Nginx, Promtail, Loki v3.4.2 và ba truy vấn LogQL thực tế"],
+            ["Hardening", "Non-root (UID 1000), read-only rootfs, internal DB network, quyền tối thiểu pm_app, secrets, cap_drop"]
+        ],
+        [1.9, 4.6]
+    )
 
     add_h2("1.2 Môi trường thực nghiệm")
-    add_p("Hệ thống được triển khai và kiểm thử thực tế trên máy trạm Windows 11 Enterprise x64 với môi trường ảo hóa Docker Desktop (context desktop-linux, Docker Engine 29.8.2, Docker Compose v2.33.1). Môi trường WSL2 Linux backend được phân bổ 4 nhân CPU ảo và 4 GB RAM, lưu trữ toàn bộ dữ liệu dự án trên phân vùng đĩa vật lý E:\\ProjectManagement.")
-    add_p("Trong quá trình khảo sát môi trường máy chủ ban đầu, phát hiện trên host đang tồn tại các container của một dự án khác (clinic containers) đang chiếm dụng các cổng 3001, 5173, 8000 và 3307. Để đảm bảo tính nguyên vẹn và không làm gián đoạn các dịch vụ đang chạy, nhóm triển khai đã đưa ra giải pháp cấu hình cổng độc lập:")
-    add_p("• Cổng Grafana: Mặc định cổng 3000 và cổng 3001 đã có tiến trình sử dụng, hệ thống chuyển sang ánh xạ cổng 3002 (127.0.0.1:3002).")
-    add_p("• Cổng Nginx Web: Sử dụng cổng HTTP 8080 và HTTPS 8443 trên host, chuyển tiếp nội bộ tới cổng 3000 của container pm-app.")
-    add_p("• Cổng pgAdmin 4: Ánh xạ cổng 8081 (127.0.0.1:8081).")
-    add_p("• Cổng Prometheus: Ánh xạ cổng 9090 (127.0.0.1:9090).")
-    add_p("• Xử lý sự cố dung lượng đĩa C: Trong quá trình kéo các layer image Docker, ổ đĩa C: bị cạn kiệt dung lượng (còn 0 MB) gây lỗi WSL snapshot. Nhóm đã kịp thời di chuyển các file cài đặt tạm thời dung lượng ~9.8 GB sang thư mục E:\\ProjectManagement\\temp_downloads (đã thêm vào .gitignore), giải phóng an toàn 9.8 GB cho ổ C:, giúp Docker Engine hoạt động ổn định và trơn tru.")
+    add_p("Máy thực nghiệm sử dụng hệ điều hành Windows 11 với Docker Desktop chạy trên context desktop-linux (WSL2 backend) để vận hành Linux containers. Thư mục làm việc chính thức của dự án được đặt tại E:\\ProjectManagement. Trong quá trình khảo sát môi trường host ban đầu, hệ thống ghi nhận một project khác trên máy (clinic_frontend, clinic_backend, clinic_mysql) đang sử dụng các cổng 3001, 5173, 8000 và 3307. Tuân thủ nguyên tắc không dừng, sửa hoặc xóa project khác trên máy, toàn bộ container của project cũ được giữ nguyên trạng; cổng dịch vụ Grafana của Đề 14 được ánh xạ sang cổng 3002 (127.0.0.1:3002) để tránh xung đột.")
+    add_p("Ngoài ra, trong lượt tải các image đầu tiên, phân vùng ổ đĩa C: trên máy chủ bị đầy (0 MB trống) làm gián đoạn quá trình giải nén layer của WSL2. Sự cố được xử lý an toàn bằng cách di chuyển các tệp cài đặt lớn không thuộc hệ điều hành (~9,8 GB) sang thư mục tạm trên ổ E: và loại trừ trong .gitignore, khôi phục gần 10 GB dung lượng trống cho ổ C: để Docker Engine hoạt động ổn định.")
 
-    add_h2("1.3 Kiến trúc và luồng hoạt động của hệ thống")
-    add_p("Kiến trúc hệ thống được thiết kế theo mô hình phân tầng hướng dịch vụ (Multi-tier Containerized Architecture), phân tách độc lập các trách nhiệm phục vụ lưu lượng người dùng, quản trị dữ liệu, giám sát tài nguyên và xử lý nhật ký tập trung.")
-    
-    add_image_figure("00_architecture_diagram.png", "Hình 1.1: Sơ đồ kiến trúc tổng thể hệ thống theo các file Docker Compose", 6.3)
+    add_h2("1.3 Kiến trúc và luồng hoạt động")
+    add_figure("00_architecture_diagram.png", "Hình 1.1 Kiến trúc hệ thống theo các file Docker Compose", 6.3)
+    add_p("Luồng truy cập người dùng bắt đầu từ trình duyệt tới Nginx. Mọi yêu cầu HTTP ở cổng 8080 đều nhận phản hồi 301 chuyển hướng sang HTTPS ở cổng 8443. Nginx thực hiện giải mã TLS, kiểm tra và gắn các HTTP security headers, sau đó chuyển tiếp request tới http://app:3000 trong mạng pm_web_network. Express xác định route, kiểm tra phiên đăng nhập lưu trong PostgreSQL hoặc xác thực CSRF token đối với các biểu mẫu thay đổi dữ liệu, rồi gọi các mô-đun model để truy vấn PostgreSQL. Kết quả được render bằng EJS và trả ngược qua Nginx về trình duyệt.")
+    add_p("Luồng giám sát (metrics) tách biệt hoàn toàn khỏi luồng phục vụ người dùng. Prometheus thực hiện scrape định kỳ mỗi 15 giây tới bốn mục tiêu: cAdvisor (cổng 8080 nội bộ), nginx-exporter (cổng 9113 nội bộ đọc từ stub_status:8082 của Nginx), postgres-exporter (cổng 9187 nội bộ kết nối PostgreSQL bằng tài khoản giám sát riêng) và chính Prometheus (cổng 9090). Grafana truy vấn dữ liệu từ Prometheus bằng ngôn ngữ PromQL qua mạng pm_monitoring_network để hiển thị lên dashboard.")
+    add_p("Luồng thu thập nhật ký (logging) bắt đầu từ file app.log của ứng dụng và access.log/error.log của Nginx nằm trên hai named volumes độc lập. Promtail mount các volume này theo chế độ chỉ đọc (:ro), phân tích cú pháp JSON, gắn nhãn job tương ứng (job=\"app\" và job=\"nginx\") rồi đẩy log tới Loki qua mạng giám sát. Quản trị viên sử dụng Grafana Explore để truy vấn Loki bằng LogQL mà không cần mở cổng Loki ra máy chủ host.")
 
-    add_p("Hệ thống vận hành dựa trên 3 luồng dữ liệu chính:")
-    add_p("1. Luồng phục vụ người dùng (User & Admin Request Flow): Khách truy cập hoặc người quản trị gửi yêu cầu từ trình duyệt web. Nếu gửi qua HTTP (cổng 8080), Nginx lập tức trả về mã trạng thái 301 chuyển hướng bắt buộc sang HTTPS (cổng 8443). Tại Nginx, phiên mã hóa TLS được giải mã, các HTTP security headers được kiểm tra và bổ sung, sau đó request được chuyển tiếp qua mạng bridge pm_web tới container pm-app tại cổng nội bộ 3000. Ứng dụng Express thực hiện kiểm tra xác thực phiên (Session), xác thực CSRF token đối với các yêu cầu ghi dữ liệu (POST), áp dụng Rate Limiting, sau đó truy vấn cơ sở dữ liệu PostgreSQL qua pool kết nối an toàn trên mạng nội bộ pm_database. Kết quả được render thành giao diện HTML thông qua EJS template engine và phản hồi ngược lại cho người dùng.")
-    add_p("2. Luồng giám sát hệ thống (Monitoring Flow): Prometheus hoạt động theo mô hình Pull, định kỳ mỗi 15 giây gửi yêu cầu scrape tới 4 mục tiêu (targets): cAdvisor (cổng 8080 nội bộ để lấy metrics CPU, RAM, Disk, Network của toàn bộ container), postgres-exporter (cổng 9187 nội bộ để lấy thông số kết nối, transaction và query của PostgreSQL), nginx-exporter (cổng 9113 nội bộ đọc số liệu từ stub_status trên cổng 8082 của Nginx) và chính Prometheus (cổng 9090). Toàn bộ chuỗi thời gian (time series) được lưu trữ trong named volume pm_prometheus_data. Grafana kết nối tới Prometheus qua mạng pm_monitoring bằng ngôn ngữ PromQL để trực quan hóa dữ liệu trên dashboard quản trị.")
-    add_p("3. Luồng nhật ký tập trung (Logging Flow): Ứng dụng pm-app và web server pm-nginx ghi nhật ký thời gian thực dưới định dạng JSON có cấu trúc chuẩn vào các named volumes pm_app_logs và pm_nginx_logs. Container Promtail mount các volume này ở chế độ chỉ đọc (read-only), đọc nối tiếp các dòng log mới (tailing), gắn nhãn (job=app hoặc job=nginx), trích xuất timestamp và đẩy về Loki qua API http://loki:3100/loki/api/v1/push. Người quản trị sử dụng Grafana Explore để truy vấn nhật ký tức thời bằng LogQL.")
-
-    add_h2("1.4 Các dịch vụ mạng và dữ liệu lưu trữ bền vững")
-    add_p("Hệ thống phân chia thành 4 mạng Docker Bridge cô lập cao nhằm đảm bảo nguyên tắc phân vùng an ninh (Network Segmentation):")
-    add_p("• pm_web: Mạng kết nối giữa Nginx reverse proxy, ứng dụng Node.js và Nginx Prometheus exporter.")
-    add_p("• pm_database: Mạng nội bộ (internal: true), hoàn toàn không có default gateway kết nối Internet, chỉ cho phép giao tiếp giữa PostgreSQL, ứng dụng pm-app, pgAdmin và postgres-exporter.")
-    add_p("• pm_management: Mạng quản trị phục vụ kết nối độc lập cho pgAdmin 4.")
-    add_p("• pm_monitoring: Mạng chuyên dụng kết nối Prometheus, Grafana, cAdvisor, các exporter, Loki và Promtail.")
-
-    headers_1_2 = ["Dịch vụ", "Tên Container", "Image nền tảng", "Cổng Host", "Mạng kết nối", "Vai trò chính"]
-    data_1_2 = [
-        ["Web App", "pm-app", "node:22-alpine", "Không publish", "pm_web, pm_database", "Xử lý nghiệp vụ quản lý dự án, tasks, members"],
-        ["Database", "pm-postgres", "postgres:16-alpine", "Không publish", "pm_database", "Lưu trữ dữ liệu quan hệ, session, audit logs"],
-        ["DB Admin", "pm-pgadmin", "dpage/pgadmin4:8.14", "127.0.0.1:8081", "pm_database, pm_mgmt", "Giao diện web quản trị cơ sở dữ liệu PostgreSQL"],
-        ["Reverse Proxy", "pm-nginx", "nginx:1.27-alpine", "8080, 8443", "pm_web", "SSL termination, cân bằng tải, security headers"],
-        ["Metrics Server", "pm-prometheus", "prom/prometheus:v3.2.1", "127.0.0.1:9090", "pm_monitoring", "Thu thập và lưu trữ time-series metrics định kỳ 15s"],
-        ["Dashboard", "pm-grafana", "grafana/grafana:11.5.0", "127.0.0.1:3002", "pm_monitoring", "Trực quan hóa metrics và giao diện truy vấn LogQL"],
-        ["Container Metrics", "pm-cadvisor", "gcr.io/cadvisor/cadvisor:v0.49.1", "Không publish", "pm_monitoring", "Thu thập thông số tài nguyên phần cứng container"],
-        ["Nginx Exporter", "pm-nginx-exporter", "nginx/nginx-prometheus-exporter:1.4", "Không publish", "pm_web, pm_monitoring", "Đọc stub_status Nginx xuất ra chuẩn Prometheus"],
-        ["Postgres Exporter", "pm-postgres-exporter", "prometheuscommunity/postgres-exporter:v0.16.0", "Không publish", "pm_database, pm_mon", "Thu thập thông số hiệu năng PostgreSQL"],
-        ["Log Storage", "pm-loki", "grafana/loki:3.4.2", "Không publish", "pm_monitoring", "Lưu trữ và lập chỉ mục nhật ký tập trung"],
-        ["Log Collector", "pm-promtail", "grafana/promtail:3.4.2", "Không publish", "pm_monitoring", "Thu gom log JSON từ named volumes đẩy về Loki"],
-        ["Init Container", "init-logs", "busybox:1.37.0", "Không mạng", "None", "Chuẩn bị quyền thư mục log cho non-root user"]
-    ]
-    add_styled_table(headers_1_2, data_1_2, [1.0, 1.2, 1.4, 0.9, 1.0, 1.6])
-    add_p("Bảng 1.2: Danh mục dịch vụ, image, cổng host và vai trò vận hành trong hệ thống", bold=True, italic=True, align=WD_ALIGN_PARAGRAPH.CENTER)
-
-    add_p("Dữ liệu hệ thống được bảo toàn thông qua 8 named volumes độc lập: pm_postgres_data (chứa toàn bộ data files của PostgreSQL), pm_pgadmin_data (lưu cấu hình sessions của pgAdmin), pm_app_logs (lưu app.log JSON), pm_nginx_logs (lưu access.log và error.log JSON), pm_prometheus_data (lưu trữ chỉ số 7 ngày), pm_grafana_data (lưu trữ cấu hình dashboard), pm_loki_data (lưu trữ chunks và index của Loki), pm_promtail_positions (lưu offset đọc log). Nhờ đó, việc khởi động lại hay build lại container không gây mất mát dữ liệu nghiệp vụ.")
-
-    # ==========================================
-    # PHẦN 2: QUẢN LÝ MÃ NGUỒN VÀ TRIỂN KHAI
-    # ==========================================
-    add_h1("PHẦN 2: QUẢN LÝ MÃ NGUỒN VÀ TRIỂN KHAI")
-    
-    add_h2("2.1 Repository và cấu trúc mã nguồn trên GitHub")
-    add_p("Toàn bộ mã nguồn của dự án được lưu trữ và quản lý phiên bản trên hệ thống GitHub theo chuẩn Git flow tại địa chỉ repository công khai:")
-    add_p("https://github.com/dtc245220019-create/ProjectManagement_TKQTHT.git", bold=True, color=RGBColor(37, 99, 235))
-    
-    add_image_figure("13_github_repository.png", "Hình 2.1: Giao diện Repository ProjectManagement_TKQTHT trên GitHub", 6.2)
-
-    add_p("Cấu trúc mã nguồn trong repository được tổ chức rõ ràng theo từng phân vùng chức năng:")
-    add_code(
-"""E:\\ProjectManagement
-├── app/                  # Mã nguồn ứng dụng Node.js Express
-│   ├── src/              # Controllers, Models, Routes, Middlewares, Views EJS
-│   ├── public/           # Static assets (CSS, Icons)
-│   ├── Dockerfile        # Đóng gói Node 22 Alpine non-root
-│   └── package.json      # Danh mục thư viện phụ thuộc (Express, pg, helmet, bcrypt...)
-├── db/init/              # Kịch bản khởi tạo cơ sở dữ liệu PostgreSQL ban đầu
-│   ├── 01_schema.sql     # Định nghĩa 7 bảng dữ liệu, khóa ngoại, indexes
-│   ├── 02_seed.sql       # Dữ liệu minh họa phong phú (Users, Projects, Tasks, Members)
-│   └── 03_users.sql      # Phân quyền least-privilege cho pm_app & postgres_exporter
-├── nginx/                # Cấu hình Nginx reverse proxy
-│   ├── nginx.conf        # SSL termination, security headers, upstream, stub_status
-│   └── ssl/              # Chứng chỉ tự ký localhost.crt (Private key loại trừ khỏi Git)
-├── monitoring/           # Cấu hình giám sát
-│   ├── prometheus.yml    # Cấu hình 4 scrape jobs (interval 15s)
-│   ├── alert.rules.yml   # Các quy tắc cảnh báo dịch vụ DOWN
-│   ├── datasources/      # Auto-provisioning datasource Prometheus & Loki cho Grafana
-│   └── dashboards/       # Auto-provisioning dashboard Project Management JSON
-├── logging/              # Cấu hình thu thập nhật ký
-│   ├── loki-config.yaml  # Cấu hình lưu trữ TSDB v13 và retention 168h
-│   └── promtail-config.yaml # Pipelines parse JSON log cho Nginx và App
-├── scripts/              # Bộ công cụ tự động hóa vận hành
-│   ├── setup.py          # Sinh mật khẩu ngẫu nhiên an toàn, tạo .env
-│   ├── smoke_test.py     # 15 ca kiểm thử tự động toàn diện hệ thống
-│   ├── backup.py         # Kịch bản sao lưu PostgreSQL chuẩn pg_dump
-│   ├── restore_test.py   # Phục hồi thử nghiệm độc lập vào database riêng
-│   └── verify_hardening.py # Kiểm chứng các tiêu chuẩn an ninh container
-├── compose.yaml          # Điều phối Core: App, PostgreSQL, pgAdmin, Nginx
-├── compose.monitoring.yaml # Điều phối Monitoring: Prometheus, Grafana, Exporters
-├── compose.logging.yaml  # Điều phối Logging: Loki, Promtail
-└── .gitignore            # Loại trừ triệt để file nhạy cảm và secrets"""
+    add_h2("1.4 Các dịch vụ mạng và dữ liệu lưu trữ")
+    add_table(
+        ["Dịch vụ", "Image hoặc nền tảng", "Cổng host", "Vai trò"],
+        [
+            ["app (pm-app)", "Node 22 Alpine (build Dockerfile)", "Không publish", "Ứng dụng quản lý dự án, task, thành viên, session DB"],
+            ["postgres (pm-postgres)", "postgres:16-alpine", "Không publish", "Lưu trữ 7 bảng dữ liệu nghiệp vụ và phiên đăng nhập"],
+            ["nginx (pm-nginx)", "nginx:1.27-alpine", "8080 và 8443", "Reverse proxy, TLS 1.2/1.3 tự ký và security headers"],
+            ["pgadmin (pm-pgadmin)", "dpage/pgadmin4:8.14", "8081", "Giao diện quản trị cơ sở dữ liệu PostgreSQL"],
+            ["cadvisor (pm-cadvisor)", "ghcr.io/google/cadvisor:0.55.1", "Không publish", "Thu thập metrics CPU, RAM, mạng của containers"],
+            ["nginx-exporter", "nginx-prometheus-exporter:1.4.1", "Không publish", "Đọc stub_status nội bộ của Nginx"],
+            ["postgres-exporter", "postgres-exporter:v0.16.0", "Không publish", "Thu thập chỉ số kết nối và truy vấn PostgreSQL"],
+            ["prometheus", "prom/prometheus:v3.2.1", "9090", "Thu thập và lưu trữ chuỗi thời gian (time series)"],
+            ["grafana", "grafana/grafana:11.5.0", "3002", "Hiển thị Dashboard giám sát và truy vấn Explore"],
+            ["loki", "grafana/loki:3.4.2", "Không publish", "Lưu trữ và lập chỉ mục nhật ký tập trung"],
+            ["promtail", "grafana/promtail:3.4.2", "Không publish", "Đọc file log từ named volumes và đẩy tới Loki"],
+            ["init-logs", "busybox:1.37.0", "Không nối mạng", "Chuẩn bị tệp log và phân quyền UID rồi thoát (Exited 0)"]
+        ],
+        [1.5, 2.1, 1.1, 1.8]
     )
-    add_p("File .gitignore được cấu hình bảo mật nghiêm ngặt, loại trừ hoàn toàn các tệp tin chứa thông tin nhạy cảm: file môi trường .env, khóa bí mật riêng tư (*.key), file dump dữ liệu backup (*.sql), thư viện node_modules, thư mục downloads tạm và các file runtime logs. Nhờ đó, tuyệt đối không có mật khẩu hay khóa bảo mật nào bị rò rỉ lên lịch sử mã nguồn GitHub.")
+    add_p("Hệ thống thiết lập bốn mạng bridge tách biệt: pm_web_network nối app, Nginx và nginx-exporter; pm_database_network được đánh dấu internal: true và chỉ nối PostgreSQL, app, pgAdmin cùng postgres-exporter; pm_management_network phục vụ giao diện quản trị pgAdmin; pm_monitoring_network nối các thành phần observability. PostgreSQL hoàn toàn không publish cổng 5432 ra host. Tất cả các cổng công bố (8080, 8443, 8081, 9090, 3002) đều bind vào địa chỉ 127.0.0.1 để giới hạn phạm vi truy cập cục bộ.")
+    add_p("Dữ liệu PostgreSQL nằm trong named volume pm_postgres_data; cấu hình pgAdmin nằm trong pm_pgadmin_data; nhật ký nằm trong pm_app_logs và pm_nginx_logs; dữ liệu của Prometheus, Grafana, Loki và vị trí đọc (positions) của Promtail đều sử dụng các named volumes riêng biệt. Nhờ vậy, thao tác khởi động lại hoặc cập nhật container ứng dụng không làm mất dự án, công việc hay thành viên đã tạo. Lệnh docker compose down -v không được sử dụng trong vận hành thông thường vì cờ -v sẽ xóa toàn bộ named volumes.")
 
-    add_h2("2.2 Ba commit mốc kỹ thuật và quy trình quản trị thay đổi")
-    add_p("Đề bài yêu cầu hệ thống phải được phát triển và quản lý bằng ít nhất 3 commit có nội dung kỹ thuật rõ ràng, tương ứng với tiến trình hoàn thiện từng giai đoạn của hệ thống. Nhóm đã thực hiện các commit có cấu trúc chuẩn Conventional Commits trên nhánh main:")
+    # =========================================================================
+    # PHẦN 2 QUẢN LÝ MÃ NGUỒN VÀ TRIỂN KHAI
+    # =========================================================================
+    add_h1("PHẦN 2 QUẢN LÝ MÃ NGUỒN VÀ TRIỂN KHAI", page_break=True)
 
-    add_image_figure("14_github_commits_history.png", "Hình 2.2: Lịch sử các commit kỹ thuật mốc đã đẩy lên nhánh main", 6.2)
+    add_h2("2.1 Repository và cấu trúc mã nguồn")
+    add_p("Toàn bộ mã nguồn và tệp cấu hình của đề tài được quản lý trên GitHub tại repository của tài khoản dtc245220019-create. Mã nguồn ứng dụng Express, Dockerfile, kịch bản khởi tạo PostgreSQL, các tệp Docker Compose, cấu hình Nginx, Prometheus, Grafana, Loki, Promtail cùng bộ scripts vận hành và kiểm thử tự động đều được tổ chức đầy đủ trong repository. Tài liệu README.md hướng dẫn chi tiết từng bước khởi tạo biến môi trường, tạo chứng chỉ TLS, khởi chạy hệ thống và chạy kiểm thử nghiệm thu.")
+    add_code("https://github.com/dtc245220019-create/ProjectManagement_TKQTHT.git")
+    add_figure("13_github_repository.png", "Hình 2.1 Repository ProjectManagement_TKQTHT trên GitHub", 6.2)
+    add_p("Thư mục app chứa mã nguồn máy chủ Express, kết nối PostgreSQL, các mô-đun nghiệp vụ (projects, tasks, members, audit, user), middleware bảo mật (auth, csrf, security), các giao diện EJS, CSS và unit tests. Thư mục db/init chứa các script SQL khởi tạo 7 bảng dữ liệu, nạp dữ liệu mẫu và thiết lập phân quyền tài khoản database; db/pgadmin chứa cấu hình servers.json tự động nạp kết nối cho pgAdmin 4. Thư mục monitoring chứa cấu hình scrape của Prometheus, alert rules và các tệp provisioning datasource/dashboard cho Grafana. Thư mục logging quản lý cấu hình Loki và Promtail. Thư mục scripts cung cấp các công cụ tự động hóa gồm setup.py, smoke_test.py, backup.py, restore_test.py và verify_hardening.py.")
+    add_p("Tệp .gitignore được thiết lập chặt chẽ để loại trừ .env, khóa bí mật certs/*.key, các bản sao lưu SQL trong backups/, thư mục node_modules, tệp nhật ký runtime và thư mục tạm. Những tệp này chứa mật khẩu, khóa phiên hoặc dữ liệu vận hành nhạy cảm nên tuyệt đối không được đưa lên lịch sử GitHub.")
 
-    headers_2_1 = ["Commit Mốc", "Commit Hash", "Thông điệp Commit", "Nội dung kỹ thuật triển khai"]
-    data_2_1 = [
-        ["Commit 1", "80c987d", "feat(core): implement project management app, postgresql, pgadmin, nginx reverse proxy", 
-         "Khởi tạo ứng dụng Node.js/Express, kết nối PostgreSQL 16, giao diện pgAdmin 4, Nginx reverse proxy, HTTPS tự ký RSA 3072 bit, CSRF, Bcrypt và Hardening cơ bản."],
-        ["Commit 2", "4e7902f", "feat(monitoring): add prometheus, cadvisor, postgres-exporter, nginx-exporter, and grafana dashboards", 
-         "Tích hợp ngăn xếp giám sát: Prometheus v3.2.1, Grafana v11.5.0, cAdvisor, postgres-exporter, nginx-exporter. Tự động provision datasource và dashboard JSON."],
-        ["Commit 3", "ade4b72", "feat(logging): integrate loki, promtail, and logql queries for nginx and app logs", 
-         "Tích hợp hệ thống thu thập log tập trung: Loki v3.4.2, Promtail v3.4.2. Cấu hình log JSON có cấu trúc, pipelines trích xuất nhãn và 3 truy vấn LogQL chuyên sâu."],
-        ["Commit 4", "f8b912a", "docs(evidence): complete comprehensive report, smoke tests, backup verification, and evidence screenshots", 
-         "Bổ sung 15 ca kiểm thử smoke test tự động, kịch bản backup/restore thử nghiệm, trích xuất minh chứng hình ảnh thực tế và hoàn thiện báo cáo chuẩn môn học."]
-    ]
-    add_styled_table(headers_2_1, data_2_1, [1.0, 1.0, 2.2, 2.8])
-    add_p("Bảng 2.1: Chi tiết các commit mốc kỹ thuật trên repository GitHub", bold=True, italic=True, align=WD_ALIGN_PARAGRAPH.CENTER)
+    add_h2("2.2 Ba commit mốc và quy trình quản lý thay đổi")
+    add_table(
+        ["Mốc", "Hash", "Nội dung chính"],
+        [
+            ["Commit 1", "80c987d", "Ứng dụng Quản lý Dự án, PostgreSQL 16, pgAdmin 4, Nginx reverse proxy và hardening cơ bản"],
+            ["Commit 2", "4e7902f", "Prometheus, Grafana, cAdvisor, Nginx/PostgreSQL exporters và provisioning dashboard"],
+            ["Commit 3", "ade4b72", "Loki, Promtail, cấu hình thu thập log JSON và các truy vấn LogQL"],
+            ["Commit bổ sung", "8e4020a", "Kịch bản kiểm thử tự động, backup/restore, minh chứng thực nghiệm và báo cáo"]
+        ],
+        [1.3, 1.1, 4.1]
+    )
+    add_figure("14_github_commits_history.png", "Hình 2.2 Lịch sử các commit mốc đã đẩy lên nhánh main", 6.2)
+    add_p("Ba commit kỹ thuật đầu tiên phân tách rõ ràng từng giai đoạn xây dựng hệ thống theo đúng yêu cầu đề bài: giai đoạn 1 hoàn thiện ứng dụng lõi, cơ sở dữ liệu và reverse proxy; giai đoạn 2 tích hợp giám sát tài nguyên và dịch vụ; giai đoạn 3 tích hợp thu thập và truy vấn nhật ký tập trung. Các tinh chỉnh phát sinh trong quá trình kiểm thử thực tế cùng bộ ảnh minh chứng được ghi nhận minh bạch ở commit bổ sung, giữ nguyên lịch sử phát triển tự nhiên trên nhánh main.")
+    add_code(
+"""git log --oneline --reverse
+git status --short
+git check-ignore .env certs/server.key backups/pm_db_backup_20261021_234722.sql
+git ls-remote origin refs/heads/main"""
+    )
+    add_p("Trước mỗi lần tạo commit và đẩy lên GitHub, nhóm đều kiểm tra trạng thái git status và dùng git check-ignore để xác nhận các tệp nhạy cảm (.env, certs/server.key, bản sao lưu SQL) đã bị chặn hoàn toàn. Người tái lập hệ thống chỉ cần chạy script setup.py để tự động sinh bộ mật khẩu ngẫu nhiên an toàn và chứng chỉ TLS cục bộ trên máy đích.")
 
-    add_h2("2.3 Đóng gói và điều phối dịch vụ bằng Docker Compose")
-    add_p("Container hóa ứng dụng được thực hiện qua Dockerfile tối ưu dựa trên image node:22-alpine. Quy trình đóng gói tuân thủ các nguyên tắc an ninh container tốt nhất:")
-    add_p("• Sử dụng Alpine Linux để giảm thiểu dung lượng image và loại bỏ các công cụ thừa có nguy cơ bảo mật.")
-    add_p("• Cài đặt dependencies bằng lệnh npm ci --omit=dev để chỉ nạp các gói phục vụ chạy production.")
-    add_p("• Chuyển sang người dùng không có đặc quyền USER node (UID 1000, GID 1000) trước khi khởi động ứng dụng.")
-    add_p("• Tạo sẵn thư mục logs và gán quyền sở hữu chính xác cho node:node.")
-
+    add_h2("2.3 Đóng gói và khởi chạy bằng Docker Compose")
+    add_p("Dockerfile của ứng dụng sử dụng image nền node:22-alpine, cài đặt các gói phụ thuộc production bằng lệnh npm ci --omit=dev từ package-lock.json để đảm bảo tính nhất quán, chuẩn bị thư mục /app/logs thuộc quyền sở hữu của người dùng node (UID 1000, GID 1000) và chuyển ngữ cảnh thực thi sang USER node trước khi khởi chạy tiến trình máy chủ.")
     add_code(
 """FROM node:22-alpine
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci --omit=dev
-COPY . .
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+COPY src/ ./src/
+COPY views/ ./views/
+COPY public/ ./public/
 RUN mkdir -p /app/logs && chown -R node:node /app
 USER node
 EXPOSE 3000
 CMD ["node", "src/server.js"]"""
     )
-
-    add_p("Cơ chế điều phối được tổ chức theo từng file Compose mô-đun: compose.yaml cho các dịch vụ cốt lõi, compose.monitoring.yaml cho hệ thống giám sát và compose.logging.yaml cho hệ thống ghi nhật ký. Để đảm bảo tính sẵn sàng của các phụ thuộc dịch vụ, hệ thống áp dụng cơ chế depends_on kết hợp healthcheck nghiêm ngặt:")
-    add_p("• PostgreSQL kiểm tra bằng pg_isready -U pm_app -d pm_db mỗi 5 giây.")
-    add_p("• Ứng dụng pm-app chỉ được khởi động sau khi PostgreSQL đã ở trạng thái healthy.")
-    add_p("• Nginx chỉ tiếp nhận lưu lượng sau khi pm-app phản hồi HTTP 200 tại endpoint /health.")
-
-    add_h2("2.4 Thiết kế cơ sở dữ liệu PostgreSQL của ứng dụng")
-    add_p("Cơ sở dữ liệu pm_db được thiết kế chuẩn hóa ở dạng chuẩn 3 (3NF), gồm 7 bảng dữ liệu phục vụ đầy đủ các chức năng nghiệp vụ quản lý dự án:")
-
-    headers_2_2 = ["Tên Bảng", "Số Cột", "Khóa Ngoại / Chỉ Mục", "Nội dung và Mục đích sử dụng"]
-    data_2_2 = [
-        ["users", "7", "UNIQUE(username, email)", "Tài khoản người dùng hệ thống, lưu trữ password_hash (Bcrypt) và vai trò (admin/member)"],
-        ["members", "7", "UNIQUE(email)", "Hồ sơ nhân sự chi tiết: họ tên, chức danh (Developer, Tester, PM), phòng ban, số điện thoại"],
-        ["projects", "8", "INDEX(status, code)", "Danh mục dự án: mã dự án, tên dự án, mô tả, ngày bắt đầu, ngày kết thúc, ngân sách, trạng thái"],
-        ["tasks", "9", "FK(project_id, assigned_to)", "Công việc chi tiết: tiêu đề, mô tả, mức độ ưu tiên (low/med/high), trạng thái, deadline"],
-        ["project_members", "4", "FK(project_id, member_id)", "Bảng liên kết nhiều-nhiều phân bổ thành viên tham gia từng dự án kèm vai trò cụ thể"],
-        ["audit_logs", "6", "INDEX(created_at, user_id)", "Nhật ký kiểm toán ghi vết các hành vi: login, login_failed, create_project, update_task..."],
-        ["session", "3", "INDEX(expire)", "Bảng lưu trữ phiên làm việc của người dùng quản lý bởi connect-pg-simple"]
-    ]
-    add_styled_table(headers_2_2, data_2_2, [1.2, 0.6, 1.8, 3.0])
-    add_p("Bảng 2.2: Thiết kế lược đồ cơ sở dữ liệu PostgreSQL của ứng dụng", bold=True, italic=True, align=WD_ALIGN_PARAGRAPH.CENTER)
-
-    add_p("Hệ thống được khởi tạo sẵn với bộ dữ liệu mẫu (Seed Data) phong phú bao gồm: 3 tài khoản người dùng, 5 thành viên nhân sự chuyên trách, 4 dự án đa dạng trạng thái (in_progress, planning, completed) và 9 công việc cụ thể được phân công chi tiết.")
-
-    add_h2("2.5 Giao diện ứng dụng và các chức năng cốt lõi")
-    add_p("Giao diện người dùng được xây dựng hiện đại, trực quan, hỗ trợ responsive trên mọi thiết bị thông qua CSS tùy biến chuyên nghiệp.")
-
-    add_image_figure("01_website_home_dashboard.png", "Hình 2.3: Giao diện trang chủ và Dashboard thống kê hệ thống", 6.2)
-    add_p("Trang chủ cung cấp các thẻ tóm tắt số liệu trực quan: tổng số dự án đang chạy, số tác vụ cần xử lý, số thành viên trong tổ chức và tỷ lệ hoàn thành dự án tổng thể. Phía dưới là danh sách các dự án trọng điểm kèm thanh tiến độ (Progress Bar) được tính toán tự động dựa trên tỷ lệ số task hoàn thành trên tổng số task của dự án.")
-
-    add_image_figure("02_website_projects_list.png", "Hình 2.4: Giao diện danh mục quản lý các dự án", 6.2)
-    add_p("Trang danh mục dự án liệt kê toàn bộ các dự án trong tổ chức với các thông tin chi tiết: Mã dự án (Code), Tên dự án, Trạng thái (Đang tiến hành, Lên kế hoạch, Hoàn thành), Ngân sách và Khoảng thời gian thực hiện. Người quản trị có thể thực hiện thêm dự án mới hoặc nhấp vào để xem chi tiết từng dự án.")
-
-    add_image_figure("03_website_project_detail.png", "Hình 2.5: Giao diện chi tiết dự án và tiến độ công việc", 6.2)
-    add_p("Trang chi tiết dự án hiển thị đầy đủ thông tin mô tả, ngân sách, danh sách thành viên đang tham gia và danh mục các công việc trực thuộc. Người quản trị có thể trực tiếp thêm công việc mới hoặc phân công thành viên ngay tại giao diện này.")
-
-    add_h2("2.6 Quản lý công việc, thành viên và nhật ký kiểm toán")
-    add_p("Phân hệ quản lý công việc (Tasks Management) cung cấp đầy đủ các thao tác vòng đời của một tác vụ dự án:")
-
-    add_image_figure("04_website_tasks_management.png", "Hình 2.6: Giao diện quản lý công việc (Tasks) và phân công thành viên", 6.2)
-    add_p("Người quản lý có thể lọc công việc theo dự án, điều chỉnh trạng thái công việc (To Do -> In Progress -> Completed), thiết lập mức độ ưu tiên (Low, Medium, High) và phân công trách nhiệm cho thành viên cụ thể.")
-
-    add_image_figure("05_website_members_management.png", "Hình 2.7: Giao diện quản trị thành viên dự án (Members)", 6.2)
-    add_p("Phân hệ quản trị thành viên cho phép quản lý thông tin nhân sự, phòng ban chuyên môn, chức danh công việc và thông tin liên hệ. Các thành viên này sau đó sẽ được lựa chọn để phân bổ vào các ban dự án.")
-
-    add_image_figure("06_website_audit_logs.png", "Hình 2.8: Giao diện nhật ký kiểm toán hành vi người dùng (Audit Logs)", 6.2)
-    add_p("Đặc biệt, hệ thống tích hợp phân hệ Audit Logs ghi lại toàn bộ các biến động dữ liệu và hành vi an ninh quan trọng: ai là người thực hiện, hành động là gì (Tạo dự án, Sửa công việc, Đăng nhập thành công/thất bại), địa chỉ IP nguồn và thời điểm chính xác. Thông tin này phục vụ đắc lực cho công tác hậu kiểm và điều tra an toàn thông tin.")
-
-    add_h2("2.7 Quản trị PostgreSQL bằng công cụ pgAdmin 4")
-    add_p("pgAdmin 4 phiên bản 8.14 được tích hợp trong hệ thống để cung cấp giao diện quản trị cơ sở dữ liệu chuyên nghiệp cho quản trị viên:")
-
-    add_image_figure("07_pgadmin_database.png", "Hình 2.9: Giao diện pgAdmin 4 quản trị cơ sở dữ liệu PostgreSQL 16", 6.2)
-    add_p("pgAdmin 4 được cấu hình tự động tải thông tin máy chủ thông qua file cấu hình servers.json đặt tại /pgadmin4/servers.json. Khi truy cập vào địa chỉ http://localhost:8081, pgAdmin tự động kết nối vào service pm-postgres trong mạng nội bộ pm_database mà không cần người dùng phải cấu hình lại thông số IP hay cổng kết nối.")
-    add_p("Giao diện pgAdmin 4 xác nhận sự tồn tại và tính toàn vẹn của 7 bảng dữ liệu thuộc schema public. Quản trị viên có thể thực hiện kiểm tra cấu trúc bảng, xem các ràng buộc khóa ngoại và thực thi các câu truy vấn SQL kiểm tra dữ liệu.")
-
-    # ==========================================
-    # PHẦN 3: NGINX VÀ HARDENING HỆ THỐNG
-    # ==========================================
-    add_h1("PHẦN 3: NGINX VÀ HARDENING HỆ THỐNG")
-    
-    add_h2("3.1 Cấu hình Nginx Reverse Proxy và HTTP Security Headers")
-    add_p("Nginx đóng vai trò là cửa ngõ duy nhất tiếp nhận lưu lượng truy cập từ bên ngoài vào hệ thống. Nginx chuyển tiếp lưu lượng tới upstream pm-app:3000 và cung cấp lớp bảo vệ vững chắc thông qua các tiêu chuẩn an ninh HTTP:")
-
-    headers_3_1 = ["HTTP Security Header", "Giá trị cấu hình", "Mục đích an ninh và Phòng chống tấn công"]
-    data_3_1 = [
-        ["X-Content-Type-Options", "nosniff", "Ngăn chặn trình duyệt tự động suy đoán sai kiểu MIME (MIME-sniffing), giảm nguy cơ tấn công drive-by download"],
-        ["X-Frame-Options", "DENY", "Cấm tuyệt đối việc nhúng trang web vào thẻ <iframe> hoặc <frame>, triệt tiêu hoàn toàn nguy cơ Clickjacking"],
-        ["Referrer-Policy", "strict-origin-when-cross-origin", "Bảo vệ thông tin URL nguồn nhạy cảm khi chuyển hướng sang các domain khác"],
-        ["Content-Security-Policy", "default-src 'self'; script-src 'self' ...", "Giới hạn nguồn tải tài nguyên JavaScript/CSS hợp lệ từ chính domain, ngăn ngừa Cross-Site Scripting (XSS)"],
-        ["Strict-Transport-Security", "max-age=31536000; includeSubDomains", "Ép buộc trình duyệt duy trì kết nối HTTPS an toàn trong vòng 1 năm (HSTS)"],
-        ["server_tokens", "off", "Ẩn thông tin phiên bản Nginx trong response header nhằm hạn chế việc dò quét lỗ hổng theo version"]
-    ]
-    add_styled_table(headers_3_1, data_3_1, [1.8, 1.8, 3.0])
-    add_p("Bảng 3.1: Các security headers được áp dụng qua Nginx và Helmet", bold=True, italic=True, align=WD_ALIGN_PARAGRAPH.CENTER)
-
-    add_p("Xử lý xung đột lặp Header: Trong quá trình kiểm thử ban đầu, nhóm phát hiện header X-Content-Type-Options bị xuất hiện 2 lần (duplicate) do cả Nginx và thư viện Helmet phía Node.js cùng trả về. Nhóm đã xử lý triệt để vấn đề này bằng cách bổ sung chỉ thị proxy_hide_header cho các header tương ứng tại khối location / của Nginx, đảm bảo client chỉ nhận đúng 1 giá trị chuẩn xác duy nhất.")
-
-    add_h2("3.2 Thiết lập HTTPS tự ký và bảo mật Session Cookie")
-    add_p("Hệ thống triển khai giao thức mã hóa TLS 1.2 và TLS 1.3 với chứng chỉ số RSA 3072 bit, thuật toán băm SHA-256, trường Subject Alternative Name (SAN) cho localhost và 127.0.0.1. Mọi lưu lượng gửi tới cổng HTTP 8080 đều nhận phản hồi 301 Moved Permanently chuyển hướng sang HTTPS 8443:")
-
+    add_p("Khi triển khai trên môi trường mới, script setup.py tự động kiểm tra và sinh tệp .env với các mật khẩu ngẫu nhiên độ dài cao cho tài khoản quản trị PostgreSQL (postgres), tài khoản ứng dụng (pm_app), tài khoản giám sát (postgres_exporter), pgAdmin, Grafana và khóa bí mật SESSION_SECRET, đồng thời khởi tạo cặp chứng chỉ tự ký RSA 3072 bit trong thư mục certs/. Tiếp theo, toàn bộ hệ thống được khởi chạy bằng lệnh Docker Compose kết hợp ba tệp cấu hình:")
     add_code(
-"""server {
-    listen 8080;
-    server_name localhost;
-    return 301 https://$host:8443$request_uri;
+"""python scripts/setup.py
+docker compose -f compose.yaml -f compose.monitoring.yaml -f compose.logging.yaml up -d --build
+docker compose -f compose.yaml -f compose.monitoring.yaml -f compose.logging.yaml ps"""
+    )
+    add_p("Cơ chế điều phối thứ tự khởi động sử dụng depends_on kết hợp điều kiện service_healthy. Container postgres có healthcheck thực thi lệnh pg_isready; container init-logs khởi tạo sẵn các tệp nhật ký trống với đúng UID 1000 (cho app) và UID 101 (cho Nginx) rồi thoát với mã Exited (0); container app chỉ bắt đầu chạy sau khi postgres đã healthy và init-logs đã hoàn tất; container nginx chờ app đạt trạng thái healthy tại endpoint /health mới bắt đầu mở cổng tiếp nhận lưu lượng [1].")
+
+    add_h2("2.4 Cơ sở dữ liệu của ứng dụng")
+    add_p("Cơ sở dữ liệu PostgreSQL có tên pm_db được khởi tạo tự động thông qua các kịch bản SQL trong thư mục db/init/ gắn vào /docker-entrypoint-initdb.d/ của container postgres. Lược đồ gồm bảy bảng dữ liệu có ràng buộc khóa ngoại và chỉ mục tối ưu:")
+    add_table(
+        ["Bảng", "Nội dung lưu trữ"],
+        [
+            ["users", "Tài khoản đăng nhập hệ thống (username, email, password_hash băm bằng Bcrypt, full_name, role)"],
+            ["members", "Danh sách nhân sự tham gia dự án (full_name, email, role_title, department, phone, status)"],
+            ["projects", "Danh mục dự án (code, name, description, status, priority, budget, start_date, end_date, owner_name)"],
+            ["tasks", "Công việc thuộc từng dự án (project_id, title, description, assigned_to, status, priority, due_date)"],
+            ["project_members", "Bảng quan hệ nhiều-nhiều gắn thành viên vào dự án kèm vai trò cụ thể (project_id, member_id, role_in_project)"],
+            ["audit_logs", "Nhật ký kiểm toán các thao tác nghiệp vụ và sự kiện xác thực (username, action, entity_type, entity_id, details, ip_address)"],
+            ["session", "Lưu trữ phiên đăng nhập của Express (sid, sess, expire) phục vụ cơ chế xác thực bền vững qua PostgreSQL"]
+        ],
+        [1.7, 4.8]
+    )
+    add_p("Dữ liệu khởi tạo ban đầu (seed data) cung cấp 4 dự án minh họa thuộc lĩnh vực công nghệ thông tin và an toàn hệ thống, 5 thành viên chuyên môn, 9 công việc ở các trạng thái khác nhau (Todo, In Progress, Done) và các bản ghi phân công dự án. Toàn bộ dữ liệu được truy vấn trực tiếp từ PostgreSQL khi render giao diện, hoàn toàn không sử dụng dữ liệu giả lập (mock) trong mã nguồn vận hành.")
+
+    add_h2("2.5 Giao diện hệ thống và danh mục dự án")
+    add_figure("01_website_home_dashboard.png", "Hình 2.3 Giao diện Dashboard tổng quan hệ thống sau khi bật HTTPS", 6.2)
+    add_p("Trang Dashboard tổng quan hiển thị thông tin đề tài Đề 14 của sinh viên Đinh Gia Bảo (MSSV DTC245220019, lớp ATTT K23A, giảng viên hướng dẫn Nguyễn Anh Chuyên) cùng bốn thẻ chỉ số thời gian thực: tổng số dự án (4), số công việc đã hoàn thành (5), số công việc đang thực hiện (2) và số nhân sự tham gia (5). Phía dưới là bảng dự án gần đây với thanh tiến độ phần trăm hoàn thành được tính tự động từ tỷ lệ công việc đã hoàn tất trong PostgreSQL, cùng danh sách các công việc cần xử lý.")
+    add_figure("02_website_projects_list.png", "Hình 2.4 Danh mục quản lý các dự án trong hệ thống", 6.2)
+    add_p("Trang danh sách dự án (/projects) cho phép tìm kiếm theo tên hoặc mã dự án, lọc theo trạng thái (Planning, In Progress, Completed, On Hold) và mức độ ưu tiên (Low, Medium, High, Critical). Mỗi dòng dự án thể hiện rõ mã định danh (PRJ-001 đến PRJ-004), người quản lý, tiến độ công việc, ngân sách và các nút thao tác xem chi tiết, chỉnh sửa hoặc xóa.")
+    add_figure("03_website_project_detail.png", "Hình 2.5 Chi tiết dự án, thành viên tham gia và tiến độ công việc", 6.2)
+    add_p("Khi mở trang chi tiết một dự án (ví dụ PRJ-001 Hệ thống Quản lý Dự án), giao diện hiển thị toàn bộ thông số dự án, thanh tiến độ hoàn thành (4/6 tasks - 67%), danh sách các công việc trực thuộc kèm biểu mẫu cập nhật nhanh trạng thái ngay trên dòng và danh sách các thành viên đang được phân công tham gia dự án đó.")
+
+    add_h2("2.6 Đăng nhập và quản trị công việc, thành viên")
+    add_figure("01b_website_login.png", "Hình 2.6 Giao diện đăng nhập quản trị của website", 6.2)
+    add_p("Route /login cung cấp biểu mẫu xác thực có nhúng trường ẩn _csrf. Khi người dùng gửi thông tin đăng nhập sai, ứng dụng trả mã trạng thái HTTP 401, ghi nhận sự kiện login_failed vào cả tệp app.log lẫn bảng audit_logs. Khi đăng nhập đúng với tài khoản quản trị, ứng dụng thiết lập phiên làm việc lưu vào bảng session trong PostgreSQL. Mật khẩu người dùng được lưu trữ dưới dạng băm Bcrypt (cost factor 10), tuyệt đối không lưu mật khẩu dạng rõ trong cơ sở dữ liệu hay hiển thị trên giao diện.")
+    add_p("Tất cả các đường dẫn nghiệp vụ (/projects, /tasks, /members, /audit) đều được bảo vệ bởi middleware requireAuth. Yêu cầu chưa đăng nhập khi truy cập các đường dẫn này sẽ bị chuyển hướng về /login; các yêu cầu POST/DELETE làm thay đổi dữ liệu bắt buộc phải đi kèm CSRF token hợp lệ, nếu thiếu hoặc sai sẽ bị từ chối ngay với mã HTTP 403 Forbidden.")
+
+    add_h3("2.6.1 Thực nghiệm quản lý công việc, thành viên và kiểm toán")
+    add_figure("04_website_tasks_management.png", "Hình 2.7 Giao diện quản lý công việc (Tasks) và phân công thành viên", 6.2)
+    add_p("Phân hệ quản lý công việc (/tasks) hỗ trợ lọc công việc theo từng dự án, trạng thái và người thực hiện. Người quản trị có thể tạo công việc mới, chỉ định dự án trực thuộc, gán nhân sự phụ trách, đặt hạn chót (due date) và chuyển đổi trạng thái công việc trực tiếp từ Todo sang In Progress hoặc Done.")
+    add_figure("05_website_members_management.png", "Hình 2.8 Giao diện quản trị thành viên dự án (Members)", 6.2)
+    add_p("Phân hệ quản lý thành viên (/members) hiển thị hồ sơ từng nhân sự gồm họ tên, chức danh chuyên môn (Project Manager, Backend Developer, Frontend Developer, QA & Security Engineer, DevOps & SRE Engineer), phòng ban, email, số điện thoại và trạng thái hoạt động, kèm đầy đủ chức năng thêm mới, chỉnh sửa và xóa thành viên.")
+    add_figure("06_website_audit_logs.png", "Hình 2.9 Giao diện nhật ký kiểm toán hành động (Audit Logs)", 6.2)
+    add_p("Trong ca kiểm thử tự động và thao tác thực nghiệm, hệ thống đã thực hiện tạo mới dự án thử nghiệm, đọc chi tiết dự án, cập nhật trạng thái công việc và xóa bản ghi thử nghiệm. Toàn bộ các sự kiện LOGIN_SUCCESS, LOGIN_FAILED, CREATE_PROJECT và DELETE_PROJECT đều được ghi vết tức thời vào bảng audit_logs và hiển thị minh bạch trên giao diện Nhật ký Hoạt động & Kiểm toán (/audit).")
+
+    add_h2("2.7 Kiểm tra PostgreSQL bằng pgAdmin 4")
+    add_figure("07_pgadmin_database.png", "Hình 2.10 pgAdmin 4 kết nối PostgreSQL và hiển thị bảy bảng dữ liệu", 6.2)
+    add_p("Công cụ pgAdmin 4 được truy cập tại địa chỉ http://localhost:8081 và kết nối tới dịch vụ postgres:5432 bên trong mạng pm_database_network. Tệp cấu hình servers.json giúp tự động đăng ký máy chủ PostgreSQL PM DB (Docker Internal) ngay khi khởi động. Cổng 8081 chỉ bind vào 127.0.0.1 trên máy host, trong khi cổng 5432 của PostgreSQL hoàn toàn không mở ra ngoài.")
+    add_p("Kết quả kiểm tra trên cây Object Explorer và cửa sổ Query Tool của pgAdmin 4 xác nhận cơ sở dữ liệu pm_db thuộc schema public có đầy đủ 7 bảng dữ liệu: audit_logs, members, project_members, projects, session, tasks và users. Các bản ghi dự án, công việc, thành viên và nhật ký kiểm toán hiển thị trong pgAdmin hoàn toàn trùng khớp với giao diện web:")
+    add_code(
+"""docker compose -f compose.yaml exec postgres psql -U pm_app -d pm_db -c "\\dt"
+docker compose -f compose.yaml exec postgres psql -U pm_app -d pm_db -c "SELECT count(*) FROM projects;" """
+    )
+    add_p("Tài khoản ứng dụng pm_app chỉ được cấp các quyền SELECT, INSERT, UPDATE, DELETE trên các bảng trong schema public và quyền USAGE, SELECT trên các sequences. Do bị thu hồi quyền CREATE trên schema public, tài khoản ứng dụng không thể tự ý tạo bảng mới hay xóa bảng (DROP/ALTER), đảm bảo đúng nguyên tắc đặc quyền tối thiểu (least privilege). Tài khoản quản trị postgres chỉ được sử dụng cục bộ cho việc khởi tạo schema ban đầu, quản trị trên pgAdmin và thực hiện sao lưu/phục hồi.")
+
+    # =========================================================================
+    # PHẦN 3 NGINX VÀ HARDENING HỆ THỐNG
+    # =========================================================================
+    add_h1("PHẦN 3 NGINX VÀ HARDENING HỆ THỐNG", page_break=True)
+
+    add_h2("3.1 Reverse proxy và security headers")
+    add_p("Nginx đóng vai trò là reverse proxy duy nhất tiếp nhận kết nối HTTP/HTTPS từ phía máy chủ host. Container ứng dụng pm-app chỉ mở cổng 3000 trong mạng nội bộ Docker và không có bất kỳ ánh xạ cổng nào ra host. Trong mạng pm_web_network, Nginx sử dụng cơ chế phân giải DNS nội bộ của Docker để chuyển tiếp lưu lượng tới upstream app:3000 kèm theo các trường header chuẩn xác (Host, X-Real-IP, X-Forwarded-For, X-Forwarded-Proto):")
+    add_code(
+"""location / {
+    proxy_pass http://app_backend;
+    proxy_http_version 1.1;
+    proxy_hide_header X-Content-Type-Options;
+    proxy_hide_header X-Frame-Options;
+    proxy_hide_header Referrer-Policy;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
 }"""
     )
+    add_p("Để tránh hiện tượng trùng lặp (duplicate) các trường security headers khi cả thư viện Helmet của Express và Nginx cùng gắn header, khối cấu hình location / sử dụng chỉ thị proxy_hide_header nhằm ẩn các header tương ứng từ upstream và thống nhất do Nginx quản lý ở tầng biên. Chính sách Content-Security-Policy tiếp tục do ứng dụng kiểm soát. Kiểm tra thực tế qua smoke test xác nhận phản hồi HTTPS chứa duy nhất một giá trị chuẩn cho mỗi header bảo mật:")
+    add_table(
+        ["Header", "Giá trị đã kiểm tra", "Mục đích"],
+        [
+            ["X-Content-Type-Options", "nosniff", "Ngăn trình duyệt tự suy đoán kiểu MIME của phản hồi"],
+            ["X-Frame-Options", "DENY", "Chặn nhúng website vào thẻ frame/iframe, phòng chống Clickjacking"],
+            ["Referrer-Policy", "strict-origin-when-cross-origin", "Giới hạn thông tin URL nguồn gửi sang origin khác"],
+            ["Content-Security-Policy", "default-src 'self' và các directive liên quan", "Kiểm soát chặt nguồn tải script, style, ảnh và tài nguyên"],
+            ["Strict-Transport-Security", "max-age=31536000; includeSubDomains", "Yêu cầu trình duyệt ưu tiên kết nối HTTPS an toàn"]
+        ],
+        [1.9, 2.1, 2.5]
+    )
+    add_p("Bên cạnh đó, Nginx tắt hiển thị phiên bản máy chủ thông qua server_tokens off, giới hạn kích thước thân yêu cầu client_max_body_size 2M và cung cấp một máy chủ nội bộ riêng ở cổng 8082 chỉ mở endpoint /stub_status trong mạng Docker để phục vụ nginx-exporter thu thập chỉ số kết nối.")
 
-    headers_3_2 = ["Hạng mục kiểm thử HTTPS & Cookie", "Kết quả thực tế", "Đánh giá an ninh"]
-    data_3_2 = [
-        ["Chuyển hướng HTTP sang HTTPS", "Mã 301, Location: https://127.0.0.1:8443/", "Đạt chuẩn an ninh vận chuyển"],
-        ["Độ mạnh chứng chỉ TLS", "RSA 3072 bit, SHA-256, SAN localhost/127.0.0.1", "Đạt chuẩn mã hóa an toàn"],
-        ["Cookie flag HttpOnly", "True (Không cho phép JavaScript client truy cập)", "Chống đánh cắp cookie qua XSS"],
-        ["Cookie flag SameSite", "Lax (Giới hạn gửi cookie trong cross-site request)", "Giảm thiểu nguy cơ CSRF"],
-        ["Cookie flag Secure", "True (Chỉ truyền qua kênh mã hóa HTTPS)", "Chống nghe lén gói tin trên đường truyền"],
-        ["Nginx Configuration Test", "nginx -t syntax is ok, test is successful", "Cấu hình chuẩn xác 100%"]
-    ]
-    add_styled_table(headers_3_2, data_3_2, [2.2, 2.6, 1.8])
-    add_p("Bảng 3.2: Kết quả kiểm tra an ninh HTTPS, Cookie và phân quyền", bold=True, italic=True, align=WD_ALIGN_PARAGRAPH.CENTER)
+    add_h2("3.2 HTTPS tự ký và cookie bảo mật")
+    add_p("Hệ thống sử dụng chứng chỉ số tự ký chuẩn RSA 3072 bit, thuật toán băm SHA-256, thời hạn hiệu lực 365 ngày, có cấu hình Subject Alternative Name (SAN) cho DNS:localhost và IP:127.0.0.1. Máy chủ Nginx lắng nghe HTTPS trên cổng 8443 với giao thức TLSv1.2 và TLSv1.3. Mọi yêu cầu gửi tới cổng HTTP 8080 đều được máy chủ chuyển hướng tự động bằng mã trạng thái 301 Moved Permanently sang https://127.0.0.1:8443/. Tệp chứng chỉ và khóa riêng nằm trong thư mục certs/, được gắn vào container Nginx ở chế độ chỉ đọc (:ro) và loại trừ khỏi Git.")
+    add_code(
+"""python scripts/setup.py
+docker compose -f compose.yaml exec nginx nginx -t
+python scripts/smoke_test.py"""
+    )
+    add_table(
+        ["Ca kiểm tra HTTPS", "Kết quả thực tế"],
+        [
+            ["Chuyển hướng HTTP 8080 sang HTTPS", "HTTP 301; Location: https://127.0.0.1:8443/"],
+            ["Endpoint /health qua HTTPS 8443", "HTTP 200; status UP, database pm_db CONNECTED (user pm_app)"],
+            ["Smoke test 15 ca kiểm thử qua TLS", "15/15 PASS (đăng nhập, CRUD dự án, headers, 404, access control, CSRF)"],
+            ["Cookie phiên pm_session_id", "Secure=true, HttpOnly=true, SameSite=Lax"],
+            ["Truy cập /projects khi chưa đăng nhập", "HTTP 302 chuyển hướng bắt buộc về /login?redirect=%2Fprojects"],
+            ["POST biểu mẫu thiếu hoặc sai CSRF token", "HTTP 403 Forbidden (từ chối thực thi yêu cầu)"],
+            ["Kiểm tra cấu hình Nginx (nginx -t)", "syntax is ok và test is successful"]
+        ],
+        [2.4, 4.1]
+    )
+    add_p("Chứng chỉ tự ký đáp ứng tốt mục tiêu mã hóa kênh truyền trong môi trường thực nghiệm và demo tại localhost. Khi triển khai hệ thống ra môi trường sản xuất có tên miền công cộng, quản trị viên cần thay thế bằng chứng chỉ do tổ chức chứng thực (CA) tin cậy cấp phát (chẳng hạn Let's Encrypt) kết hợp cơ chế gia hạn tự động.")
 
-    add_h2("3.3 Cơ chế bảo vệ tài khoản, chống CSRF và Rate Limiting")
-    add_p("Ứng dụng triển khai nhiều lớp phòng thủ chuyên sâu ở tầng mã nguồn:")
-    add_p("1. Băm mật khẩu (Password Hashing): Sử dụng thư viện Bcrypt với salt rounds 10. Mật khẩu không bao giờ được lưu trữ dưới dạng bản rõ (plaintext). Việc xác thực sử dụng hàm so sánh thời gian an toàn (timing-safe comparison) để chống tấn công Timing Attacks.")
-    add_p("2. Phòng chống CSRF (Cross-Site Request Forgery): Tất cả các biểu mẫu gửi yêu cầu thay đổi trạng thái (POST, PUT, DELETE) đều bắt buộc phải mang theo token CSRF hợp lệ được sinh ngẫu nhiên theo phiên. Các request thiếu token hoặc token không hợp lệ bị từ chối ngay lập tức với mã HTTP 403 Forbidden.")
-    add_p("3. Phòng chống Brute-Force và DoS: Sử dụng express-rate-limit giới hạn tối đa 100 requests trong vòng 15 phút đối với các route thông thường và siết chặt tối đa 10 lần thử đăng nhập sai trong 15 phút đối với endpoint /login. Khi vượt ngưỡng, hệ thống trả về mã 429 Too Many Requests và ghi sự kiện cảnh báo an ninh.")
-    add_p("4. Phòng chống SQL Injection: Toàn bộ các thao tác truy vấn cơ sở dữ liệu đều sử dụng Parameterized Queries ($1, $2, ...) thông qua driver pg. Tuyệt đối không thực hiện cộng chuỗi dữ liệu người dùng vào câu lệnh SQL.")
-    add_p("5. Phòng chống Stored XSS: Template engine EJS sử dụng cú pháp tự động escape mã HTML (<%= %>) đối với toàn bộ các trường dữ liệu người dùng nhập trước khi render ra màn hình.")
+    add_h2("3.3 Bảo vệ tài khoản và dữ liệu ứng dụng")
+    add_p("Mật khẩu của tài khoản người dùng được băm bằng thuật toán Bcrypt với salt ngẫu nhiên 10 vòng (salt rounds = 10). Phiên đăng nhập được quản lý bởi express-session kết hợp connect-pg-simple để lưu trực tiếp vào bảng session trong PostgreSQL với thời hạn 24 giờ, kèm cơ chế tự động dọn dẹp các phiên hết hạn. Để ngăn chặn tấn công vét cạn mật khẩu (brute-force), route /login áp dụng bộ giới hạn tốc độ (express-rate-limit) cho phép tối đa 10 lần thử sai trong cửa sổ 15 phút trên mỗi địa chỉ IP, trong khi toàn bộ ứng dụng được bảo vệ bởi ngưỡng 200 requests/15 phút.")
 
-    add_h2("3.4 Hardening Container, cô lập mạng và phân quyền Database")
-    add_p("Đề tài áp dụng nghiêm ngặt ít nhất 7 biện pháp gia cố bảo mật (Hardening) đạt tiêu chuẩn an toàn thông tin chuyên nghiệp:")
+    add_h2("3.4 Hardening container mạng và cơ sở dữ liệu")
+    add_table(
+        ["Biện pháp", "Cấu hình và kết quả kiểm chứng"],
+        [
+            ["Chạy tiến trình Non-root", "Container pm-app chạy uid=1000(node) gid=1000(node); Nginx chạy UID 101; Loki/Promtail chạy UID 10001"],
+            ["Root filesystem chỉ đọc", "Docker inspect pm-app xác nhận ReadonlyRootfs=true; thư mục /tmp gắn qua tmpfs (rw,noexec,nosuid,size=64m)"],
+            ["Thu hồi Linux capabilities", "Áp dụng cap_drop=[ALL] và security_opt=[no-new-privileges:true] cho container ứng dụng và Nginx"],
+            ["Cô lập mạng cơ sở dữ liệu", "Docker network inspect pm_database_network xác nhận Internal=true; PortBindings của pm-postgres rỗng {}"],
+            ["Giới hạn cổng lắng nghe host", "Toàn bộ cổng mở ra máy chủ (8080, 8443, 8081, 9090, 3002) đều bind chặt vào 127.0.0.1"],
+            ["Least privilege PostgreSQL", "Tài khoản pm_app chỉ có quyền SELECT, INSERT, UPDATE, DELETE; tách biệt hoàn toàn với postgres_exporter"],
+            ["Quản lý Secrets ngoài Git", "Mật khẩu sinh ngẫu nhiên trong .env cục bộ; .gitignore chặn .env, certs/*.key và backups/*.sql"],
+            ["Bảo vệ lớp ứng dụng Web", "CSRF token theo phiên, parameterized SQL ($1, $2...), escape EJS chống XSS, cookie flags và security headers"]
+        ],
+        [2.0, 4.5]
+    )
+    add_code(
+"""docker compose -f compose.yaml exec app id
+docker inspect pm-app --format "{{.HostConfig.ReadonlyRootfs}} {{.HostConfig.CapDrop}}"
+docker network inspect pm_database_network --format "{{.Internal}}"
+python scripts/verify_hardening.py"""
+    )
+    add_p("Kết quả truy vấn bảng phân quyền information_schema.role_table_grants trong PostgreSQL xác nhận tài khoản pm_app chỉ nắm giữ đúng 4 quyền thao tác dữ liệu (INSERT, SELECT, UPDATE, DELETE) trên các bảng nghiệp vụ và không có quyền thay đổi cấu trúc lược đồ. Mọi câu lệnh SQL trong thư mục app/src/models/ đều sử dụng cú pháp tham số hóa ($1, $2, ...) của thư viện pg để loại bỏ nguy cơ SQL Injection:")
+    add_code(
+"""grantee | privilege_type
+---------+----------------
+ pm_app  | INSERT
+ pm_app  | SELECT
+ pm_app  | UPDATE
+ pm_app  | DELETE
+(4 rows)"""
+    )
+    add_p("Báo cáo cũng phân biệt rõ mức độ hardening giữa các thành phần thay vì tuyên bố mọi container đều giống hệt nhau: container init-logs chạy quyền root trong vài giây đầu để thiết lập quyền thư mục log trên named volume rồi thoát ngay; container pm-cadvisor cần cờ privileged: true và mount chỉ đọc các thư mục hệ thống (/sys, /var/lib/docker, /var/lib/containerd) để đọc chỉ số cgroup từ nhân Linux; image pgAdmin và PostgreSQL vận hành theo cơ chế entrypoint chuẩn của nhà phát hành.")
 
-    headers_3_3 = ["Biện pháp Hardening", "Cấu hình kỹ thuật áp dụng", "Kết quả kiểm chứng thực tế"]
-    data_3_3 = [
-        ["1. Non-root User", "Khởi chạy app dưới user node (UID 1000, GID 1000); Nginx chạy UID 101", "docker exec id trả về: uid=1000(node) gid=1000(node)"],
-        ["2. Read-only Rootfs", "Bật read_only: true cho container pm-app; mount tmpfs cho /tmp", "Docker inspect: ReadonlyRootfs = true; /tmp có cờ rw,noexec,nosuid"],
-        ["3. Giảm đặc quyền Linux", "Áp dụng cap_drop: [ALL] và no-new-privileges: true", "Container bị tước bỏ mọi quyền nâng cao của nhân Linux"],
-        ["4. Cô lập mạng cơ sở dữ liệu", "Mạng pm_database cấu hình internal: true, không gateway ra ngoài", "Docker network inspect: Internal = true; không thể truy cập Internet"],
-        ["5. Đóng cổng Database host", "PostgreSQL không publish cổng 5432 ra host (bỏ ports mapping)", "Docker inspect: PortBindings = {} (Trống hoàn toàn)"],
-        ["6. Quyền tối thiểu Database", "Tài khoản pm_app chỉ được cấp INSERT, SELECT, UPDATE, DELETE", "PostgreSQL table grants: pm_app chỉ có CRUD, không có DDL"],
-        ["7. Bind cổng cục bộ", "Tất cả các cổng public (8080, 8443, 8081, 9090, 3002) bind 127.0.0.1", "Chỉ cho phép truy cập từ localhost, không lộ ra mạng LAN"],
-        ["8. Quản lý Secrets an toàn", "Mật khẩu sinh ngẫu nhiên qua setup.py, lưu trong .env ngoài Git", ".gitignore chặn triệt để .env, *.key, secrets"]
-    ]
-    add_styled_table(headers_3_3, data_3_3, [1.5, 2.5, 2.6])
-    add_p("Bảng 3.3: Tổng hợp các biện pháp Hardening và kết quả kiểm chứng", bold=True, italic=True, align=WD_ALIGN_PARAGRAPH.CENTER)
+    # =========================================================================
+    # PHẦN 4 GIÁM SÁT VÀ LOG TẬP TRUNG
+    # =========================================================================
+    add_h1("PHẦN 4 GIÁM SÁT VÀ LOG TẬP TRUNG", page_break=True)
 
-    add_p("Giải thích các ngoại lệ kỹ thuật: Không phải mọi container đều có mức hardening giống hệt nhau do đặc thù kiến trúc. Ví dụ: cAdvisor bắt buộc phải chạy dưới quyền privileged và mount các thư mục hệ thống host (/sys, /var/run/docker.sock) để có thể đọc được số liệu hiệu năng của toàn bộ Docker Engine; init-logs cần quyền root tạm thời để tạo và chown thư mục log rồi lập tức thoát trạng thái Exited (0). Các ngoại lệ này hoàn toàn có chủ đích kỹ thuật và được kiểm soát chặt chẽ.")
+    add_h2("4.1 Cấu hình Prometheus và các exporter")
+    add_p("Prometheus thu thập chỉ số theo mô hình pull với chu kỳ scrape_interval và evaluation_interval đều đặt là 15 giây. Mỗi mục tiêu được gắn nhãn job rõ ràng để phân biệt nguồn dữ liệu. Dữ liệu chuỗi thời gian được lưu trữ bền vững trong volume pm_prometheus_data với thời gian lưu giữ (retention) 7 ngày. Tệp alert.rules.yml định nghĩa sẵn các quy tắc kiểm tra trạng thái exporter mất kết nối, nginx_up == 0 và pg_up == 0.")
+    add_code(
+"""global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs: [{targets: ["prometheus:9090"]}]
+  - job_name: "cadvisor"
+    static_configs: [{targets: ["cadvisor:8080"]}]
+  - job_name: "nginx"
+    static_configs: [{targets: ["nginx-exporter:9113"]}]
+  - job_name: "postgres"
+    static_configs: [{targets: ["postgres-exporter:9187"]}]"""
+    )
+    add_figure("08_prometheus_targets.png", "Hình 4.1 Bốn targets Prometheus ở trạng thái UP", 6.2)
+    add_p("Kết quả trên giao diện Prometheus Targets và API /api/v1/targets xác nhận cả 4 mục tiêu cadvisor, nginx, postgres và prometheus đều ở trạng thái UP (1/1 up), trường lastError rỗng. Bên cạnh trạng thái scrape HTTP của bản thân exporter, các truy vấn chuyên sâu nginx_up và pg_up đều trả về giá trị 1, chứng minh các exporter thực sự kết nối và đọc được dữ liệu từ Nginx stub_status cũng như cơ sở dữ liệu PostgreSQL.")
 
-    # ==========================================
-    # PHẦN 4: GIÁM SÁT VÀ LOG TẬP TRUNG
-    # ==========================================
-    add_h1("PHẦN 4: GIÁM SÁT VÀ LOG TẬP TRUNG")
-    
-    add_h2("4.1 Cấu hình Prometheus và các Exporters")
-    add_p("Prometheus phiên bản 3.2.1 được cấu hình để tự động thu thập (scrape) định kỳ 15 giây toàn bộ các chỉ số vận hành của hệ thống thông qua 4 exporters chuyên biệt:")
+    add_h2("4.2 Dashboard Grafana và dữ liệu container")
+    add_figure("09_grafana_dashboard.png", "Hình 4.2 Dashboard Grafana có trạng thái web DB và đồ thị tài nguyên container", 6.2)
+    add_p("Grafana chạy tại địa chỉ http://localhost:3002, được cấu hình tự động (provisioning) qua các tệp YAML trong thư mục monitoring/grafana/provisioning/ để nạp sẵn datasource Prometheus (http://prometheus:9090) và Loki (http://loki:3100). Dashboard “Project Management - Containers, Web, Database” nằm trong thư mục Đề 14 - Project Management tự động hiển thị 4 chỉ số Exporter targets bằng 1, Nginx status bằng 1, PostgreSQL status bằng 1 cùng ba đồ thị tài nguyên container theo thời gian thực.")
+    add_p("Do cAdvisor thu thập chỉ số ở cấp độ Docker Engine trên máy chủ, danh sách series trả về bao gồm cả 11 container đang chạy của stack Đề 14 (pm-app, pm-postgres, pm-pgadmin, pm-nginx, pm-cadvisor, pm-nginx-exporter, pm-postgres-exporter, pm-prometheus, pm-grafana, pm-loki, pm-promtail) lẫn 3 container của dự án khác trên cùng máy (tổng cộng 14 container đang hoạt động). Việc giải thích rõ phạm vi toàn engine của cAdvisor giúp đọc đúng số liệu thực tế trên dashboard.")
+    add_code(
+"""sum by (name) (rate(container_cpu_usage_seconds_total{
+  job="cadvisor",name!=""}[2m])) * 100
+container_memory_working_set_bytes{job="cadvisor",name!=""}"""
+    )
+    add_p("Về đơn vị đo lường: biểu thức CPU sử dụng tốc độ tăng của container_cpu_usage_seconds_total trong cửa sổ 2 phút nhân với 100, thể hiện phần trăm thời gian sử dụng tính trên một lõi CPU (nếu một container dùng nhiều lõi, giá trị có thể vượt 100%). Biểu thức bộ nhớ sử dụng container_memory_working_set_bytes đo bằng đơn vị Bytes (hiển thị MiB trên đồ thị), phản ánh lượng RAM thực tế đang hoạt động. Đồ thị mạng sử dụng tốc độ byte nhận mỗi giây (B/s hoặc kB/s) qua biểu thức rate(container_network_receive_bytes_total[2m]).")
 
-    add_image_figure("08_prometheus_targets.png", "Hình 4.1: Bốn targets Prometheus ở trạng thái UP (100%)", 6.2)
-    add_p("Giao diện quản trị Prometheus tại địa chỉ http://localhost:9090/targets xác nhận 100% cả 4 mục tiêu giám sát đều ở trạng thái UP với thời gian phản hồi cực nhanh (< 5ms) và không có bất kỳ lỗi scrape nào:")
-    add_p("• cadvisor (cadvisor:8080): Thu thập thông số tài nguyên CPU, bộ nhớ RAM, lưu lượng I/O đĩa và mạng của tất cả các container đang chạy.")
-    add_p("• nginx (nginx-exporter:9113): Kết nối tới stub_status của Nginx trên cổng nội bộ 8082, thu thập số lượng kết nối đang hoạt động (active connections) và tổng số request HTTP.")
-    add_p("• postgres (postgres-exporter:9187): Kết nối an toàn vào PostgreSQL bằng tài khoản postgres_exporter có vai trò pg_monitor, thu thập số lượng kết nối backend, transactions, commit/rollback.")
-    add_p("• prometheus (localhost:9090): Tự giám sát hiệu năng của chính server Prometheus.")
+    add_h2("4.3 Giám sát Nginx PostgreSQL và kiểm tra tạo tải")
+    add_figure("09b_grafana_dashboard_bottom.png", "Hình 4.3 Các panel lưu lượng Nginx và kết nối PostgreSQL trong dashboard", 6.2)
+    add_p("Nửa dưới của dashboard tập trung giám sát tầng dịch vụ web và cơ sở dữ liệu. Nginx exporter đọc endpoint stub_status nội bộ để xuất bộ đếm tổng số yêu cầu HTTP (nginx_http_requests_total) và số kết nối đang hoạt động (nginx_connections_active). PostgreSQL exporter sử dụng tài khoản postgres_exporter có quyền pg_monitor để thu thập số kết nối đang mở tới cơ sở dữ liệu pm_db (pg_stat_database_numbackends) và tốc độ giao dịch commit/rollback mỗi giây.")
+    add_table(
+        ["PromQL", "Ý nghĩa", "Kết quả mẫu"],
+        [
+            ["nginx_up", "Nginx exporter kết nối thành công tới Nginx stub_status", "1"],
+            ["pg_up", "PostgreSQL exporter kết nối thành công tới PostgreSQL", "1"],
+            ["pg_stat_database_numbackends{datname=\"pm_db\"}", "Số kết nối đang mở tới cơ sở dữ liệu pm_db", "3 đến 4 kết nối tại thời điểm lấy mẫu"],
+            ["sum(rate(nginx_http_requests_total[2m]))", "Tốc độ yêu cầu HTTP đi qua Nginx", "Khoảng 0,21 – 0,44 req/s khi chạy kiểm thử"],
+            ["sum(rate(pg_stat_database_xact_commit{datname=\"pm_db\"}[2m]))", "Tốc độ giao dịch SQL hoàn tất mỗi giây", "Khoảng 2,5 – 3,1 ops/s khi có tải"]
+        ],
+        [2.6, 2.3, 1.6]
+    )
+    add_p("Các giá trị trong bảng là ảnh chụp (snapshot) thực tế trong quá trình chạy kiểm thử tự động và thao tác trình duyệt. Khi thực hiện mở trang chủ, đăng nhập, thêm/xóa dự án và gửi các request kiểm tra, bộ đếm request của Nginx và tốc độ giao dịch của PostgreSQL lập tức tăng lên rõ rệt trên đồ thị.")
 
-    headers_4_1 = ["Chỉ số PromQL", "Mục tiêu giám sát", "Ý nghĩa quản trị", "Giá trị thực tế kiểm tra"]
-    data_4_1 = [
-        ["nginx_up", "Web Server", "Xác nhận Nginx exporter kết nối thành công tới Nginx", "1 (Active)"],
-        ["pg_up", "Database", "Xác nhận Postgres exporter kết nối thành công cơ sở dữ liệu", "1 (Active)"],
-        ["pg_stat_database_numbackends", "Database Connections", "Số lượng kết nối đang mở đồng thời tới cơ sở dữ liệu pm_db", "4 kết nối đồng thời"],
-        ["sum(rate(nginx_http_requests_total[2m]))", "Traffic Rate", "Tốc độ yêu cầu HTTP trung bình qua Nginx trong 2 phút", "0.25 requests/sec (tăng khi có tải)"],
-        ["container_memory_working_set_bytes", "Resource Usage", "Dung lượng bộ nhớ RAM thực tế đang sử dụng của container", "pm-app: ~45 MB; pm-postgres: ~38 MB"]
-    ]
-    add_styled_table(headers_4_1, data_4_1, [2.0, 1.2, 2.3, 1.1])
-    add_p("Bảng 4.1: Các chỉ số giám sát PromQL chính và giá trị thực tế", bold=True, italic=True, align=WD_ALIGN_PARAGRAPH.CENTER)
+    add_h2("4.4 Thiết kế hệ thống log tập trung")
+    add_p("Nginx được cấu hình định dạng log json_combined ghi vào tệp /var/log/nginx/access.log với các trường cấu trúc gồm timestamp, client_ip, method, uri, status, body_bytes_sent, request_time, http_referer và http_user_agent. Ứng dụng Express sử dụng mô-đun logger riêng ghi các sự kiện HTTP, xác thực và thao tác dữ liệu dưới dạng JSON vào /app/logs/app.log. Để đảm bảo an toàn thông tin, logger chỉ ghi nhận các trường định danh phục vụ truy vết (timestamp, level, event, message, method, path, status, ip, user) và tuyệt đối không ghi mật khẩu, cookie hay chuỗi session ID vào nhật ký.")
+    add_code(
+"""clients:
+  - url: http://loki:3100/loki/api/v1/push
+positions:
+  filename: /positions/positions.yaml
+scrape_configs:
+  - job_name: nginx
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: nginx
+          service: reverse-proxy
+          __path__: /logs/nginx/*.log
+  - job_name: app
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: app
+          service: project-management-app
+          __path__: /logs/app/*.log"""
+    )
+    add_p("Promtail mount cả hai named volumes pm_nginx_logs và pm_app_logs ở chế độ chỉ đọc (:ro), lưu vị trí offset đã đọc vào tệp /positions/positions.yaml để không bị mất hay trùng log khi khởi động lại. Loki sử dụng cấu trúc lưu trữ TSDB schema v13 trên filesystem với thời gian lưu giữ 168 giờ (7 ngày). Datasource Loki được provision tự động vào Grafana thông qua mạng nội bộ http://loki:3100 và không mở cổng Loki ra máy chủ host.")
+    add_p("Lưu ý kỹ thuật về công cụ: Theo thông báo chính thức của Grafana Labs, tác tử Promtail đã bước vào giai đoạn kết thúc vòng đời hỗ trợ (EOL) từ đầu năm 2026 để chuyển hướng sang Grafana Alloy [3]. Trong phạm vi đồ án môn học, hệ thống vẫn triển khai đúng bộ công cụ Loki + Promtail theo yêu cầu bắt buộc của đề bài và ghi nhận rõ lộ trình nâng cấp sang Grafana Alloy trong phần định hướng phát triển.")
 
-    add_h2("4.2 Dashboard Grafana và phân tích dữ liệu tài nguyên")
-    add_p("Grafana v11.5.0 được cấu hình tự động hoàn toàn (Auto-provisioning) bằng file cấu hình trong Git. Khi container khởi động, Grafana tự động nạp 2 nguồn dữ liệu (Prometheus và Loki) cùng Dashboard chuyên dụng mà không đòi hỏi thao tác thủ công:")
+    add_h2("4.5 Phương pháp kiểm chứng log")
+    add_p("Để tạo dữ liệu nhật ký thực tế phục vụ truy vấn, kịch bản smoke test và thao tác trình duyệt đã thực hiện chuỗi hành động: truy cập các trang dự án/công việc hợp lệ (HTTP 200), gửi yêu cầu tới đường dẫn không tồn tại /not-found-page-xyz-999 (HTTP 404), gửi POST thiếu CSRF token (HTTP 403) và thực hiện đăng nhập với mật khẩu sai (HTTP 401 - sinh sự kiện login_failed). Sau khi Promtail đẩy log sang Loki, cả ba truy vấn LogQL được chạy kiểm chứng trực tiếp trên giao diện Grafana Explore.")
 
-    add_image_figure("09_grafana_dashboard.png", "Hình 4.2: Dashboard Grafana giám sát toàn diện Containers, Nginx và PostgreSQL", 6.2)
-    add_p("Dashboard “Project Management - System Observability” được thiết kế chuyên nghiệp với các panel đồ thị trực quan:")
-    add_p("• Trạng thái dịch vụ (Service Health): Các panel hiển thị trạng thái UP của Nginx và PostgreSQL với màu xanh lá cây.")
-    add_p("• Đồ thị CPU Usage: Sử dụng công thức sum by (name) (rate(container_cpu_usage_seconds_total[2m])) * 100. Đơn vị tính là tỷ lệ phần trăm thời gian CPU trên 1 nhân vi xử lý.")
-    add_p("• Đồ thị Memory Working Set: Sử dụng container_memory_working_set_bytes tính bằng Megabytes/Gigabytes, phản ánh chính xác lượng RAM thực mà hệ điều hành cấp phát cho container.")
-    add_p("• Đồ thị Network Traffic: Thống kê tốc độ nhận (RX) và truyền (TX) dữ liệu mạng qua từng container.")
-    add_p("• PostgreSQL Metrics: Thống kê số lượng kết nối đang hoạt động và số lượng transaction được commit vào database.")
-
-    add_h2("4.3 Giám sát Nginx, PostgreSQL và kiểm tra tạo tải")
-    add_p("Để kiểm chứng khả năng giám sát phản ánh đúng thực tế, nhóm đã thực hiện chạy script smoke test tự động tạo ra một chuỗi các yêu cầu HTTP liên tục bao gồm tải trang chủ, đăng nhập, gọi API, tạo mới và xóa dữ liệu. Đồ thị Grafana lập tức ghi nhận sự gia tăng tương ứng của request rate từ 0 lên đỉnh ~2.5 req/s và số lượng kết nối cơ sở dữ liệu tăng nhẹ khi ứng dụng thực hiện các truy vấn đồng thời.")
-
-    add_h2("4.4 Thiết kế hệ thống thu thập log tập trung Loki và Promtail")
-    add_p("Hệ thống nhật ký tập trung sử dụng Loki v3.4.2 làm kho lưu trữ và Promtail v3.4.2 làm tác tử thu gom. Toàn bộ nhật ký được chuẩn hóa dưới định dạng JSON có cấu trúc chặt chẽ:")
-    add_p("• Nginx Access Log: Ghi nhận time_local, remote_addr, request_method, request_uri, status, body_bytes_sent, request_time.")
-    add_p("• App JSON Log: Ghi nhận timestamp, level, event (login_success, login_failed, create_project...), method, path, status, userId, ip.")
-    add_p("Promtail mount các thư mục log /logs/nginx và /logs/app ở chế độ chỉ đọc (:ro), phân tích các trường JSON thông qua json pipeline stage, trích xuất các trường nhạy cảm thành labels tìm kiếm và chuyển tiếp an toàn tới Loki qua cổng nội bộ 3100. Dữ liệu trong Loki được cấu hình lưu trữ theo định dạng TSDB v13 với thời gian lưu giữ (retention) là 168 giờ (7 ngày).")
-
-    add_h2("4.5 Phương pháp tạo lưu lượng và kiểm chứng log")
-    add_p("Để có dữ liệu nhật ký thực tế minh chứng cho hệ thống, nhóm triển khai đã kích hoạt 3 kịch bản tạo sự kiện:")
-    add_p("1. Kịch bản truy cập thông thường: Thực hiện duyệt các trang danh mục dự án, chi tiết công việc để sinh access log chuẩn.")
-    add_p("2. Kịch bản lỗi HTTP: Gửi request tới đường dẫn không tồn tại /not-found-demo để kích hoạt lỗi 404 Not Found.")
-    add_p("3. Kịch bản an ninh: Nhập sai mật khẩu quản trị trên biểu mẫu /login kèm CSRF token hợp lệ để kích hoạt lỗi HTTP 401 Unauthorized và sinh sự kiện an ninh login_failed.")
-
-    add_h2("4.6 Truy vấn LogQL 1: Xem log truy cập Nginx")
-    add_p("Truy vấn sử dụng stream selector lọc toàn bộ nhật ký truy cập được phân luồng bởi Nginx:")
+    add_h2("4.6 LogQL xem log truy cập Nginx")
     add_code('{job="nginx"}')
+    add_figure("10_grafana_loki_query1_access.png", "Hình 4.4 Truy vấn log truy cập Nginx trên Grafana Explore", 6.2)
+    add_p("Bộ chọn stream {job=\"nginx\"} truy xuất toàn bộ nhật ký của Nginx reverse proxy đã được Promtail gắn nhãn. Kết quả trên Grafana Explore hiển thị biểu đồ tần suất log (Logs volume) cùng danh sách các dòng log JSON chứa đầy đủ thời điểm, địa chỉ IP, phương thức GET/POST, đường dẫn (/projects, /tasks, /health) và mã phản hồi HTTP thực tế.")
 
-    add_image_figure("10_grafana_loki_query1_access.png", "Hình 4.3: Truy vấn LogQL 1 - Xem log truy cập Nginx trên Grafana Explore", 6.2)
-    add_p("Kết quả trả về hiển thị đầy đủ các dòng access log theo thời gian thực với các trường phương thức (GET), đường dẫn (/projects, /tasks), mã phản hồi HTTP 200/301/304 và thời gian xử lý request tính bằng mili-giây.")
-
-    add_h2("4.7 Truy vấn LogQL 2: Lọc request lỗi HTTP từ 400 trở lên")
-    add_p("Truy vấn sử dụng pipeline parser json kết hợp bộ lọc số học trên trường status để phát hiện các request bị lỗi:")
+    add_h2("4.7 LogQL lọc request lỗi HTTP")
     add_code('{job="nginx"} | json | status >= 400')
+    add_figure("11_grafana_loki_query2_errors.png", "Hình 4.5 Lọc access log có mã HTTP từ 400 trở lên", 6.2)
+    add_p("Truy vấn thứ hai đưa luồng log Nginx qua bộ phân tích cú pháp | json để tách các trường dữ liệu, sau đó áp dụng điều kiện lọc số học status >= 400. Kết quả lọc chính xác các yêu cầu phát sinh mã lỗi phía client hoặc bị chặn bởi cơ chế bảo mật, bao gồm các yêu cầu 404 Not Found và 403 Forbidden khi kiểm thử CSRF, giúp quản trị viên nhanh chóng khoanh vùng các truy cập bất thường.")
 
-    add_image_figure("11_grafana_loki_query2_errors.png", "Hình 4.4: Truy vấn LogQL 2 - Lọc access log có mã HTTP từ 400 trở lên", 6.2)
-    add_p("Kết quả trên Grafana Explore lọc chính xác các yêu cầu truy cập tài nguyên không tồn tại trả về mã 404, các yêu cầu bị từ chối quyền truy cập trả về mã 403 Forbidden và các lần xác thực thất bại mã 401. Đây là công cụ đắc lực cho quản trị viên phát hiện nhanh các dấu hiệu tấn công dò quét lỗ hổng.")
-
-    add_h2("4.8 Truy vấn LogQL 3: Tìm sự kiện đăng nhập thất bại")
-    add_p("Truy vấn nhắm trực tiếp vào stream nhật ký của ứng dụng, giải mã JSON và trích lọc chính xác sự kiện đăng nhập sai:")
+    add_h2("4.8 LogQL tìm sự kiện đăng nhập thất bại")
     add_code('{job="app"} | json | event="login_failed"')
+    add_figure("12_grafana_loki_query3_login_failed.png", "Hình 4.6 Tìm sự kiện login_failed của ứng dụng trong Loki", 6.2)
+    add_p("Truy vấn thứ ba chọn luồng nhật ký ứng dụng {job=\"app\"}, giải mã JSON và lọc chính xác trường event=\"login_failed\". Kết quả trả về các dòng cảnh báo mức warn ghi nhận thời điểm đăng nhập thất bại, tên tài khoản thử nghiệm (admin), mã phản hồi 401 và địa chỉ IP nguồn, nhưng hoàn toàn không chứa mật khẩu đã nhập. Truy vấn này giúp đội ngũ vận hành phát hiện sớm hành vi dò đoán mật khẩu mà vẫn đảm bảo an toàn dữ liệu nhạy cảm.")
+    add_table(
+        ["Query", "Sự kiện tạo thử", "Kết quả ghi nhận trên Explore"],
+        [
+            ["{job=\"nginx\"}", "Truy cập Dashboard, danh sách dự án, chi tiết dự án và healthcheck", "Hiển thị đầy đủ các dòng access log JSON mã 200/302"],
+            ["{job=\"nginx\"} | json | status >= 400", "Truy cập đường dẫn không tồn tại (404) và gửi POST thiếu CSRF (403)", "Lọc chính xác các dòng log có trường status bằng 403 và 404"],
+            ["{job=\"app\"} | json | event=\"login_failed\"", "Đăng nhập với mật khẩu sai kèm CSRF token hợp lệ", "Trả về đúng các bản ghi sự kiện login_failed mức warn (HTTP 401)"]
+        ],
+        [2.1, 2.2, 2.2]
+    )
 
-    add_image_figure("12_grafana_loki_query3_login_failed.png", "Hình 4.5: Truy vấn LogQL 3 - Tìm sự kiện đăng nhập thất bại của ứng dụng", 6.2)
-    add_p("Kết quả trả về ghi nhận chi tiết thời điểm người dùng cố gắng đăng nhập sai tài khoản admin, mã phản hồi 401, địa chỉ IP nguồn và đường dẫn /login. Điểm đặc biệt quan trọng về mặt an toàn thông tin là dòng log tuyệt đối không lưu trữ mật khẩu nhập vào của người dùng, đảm bảo tuân thủ triệt để nguyên tắc bảo mật thông tin nhạy cảm.")
+    # =========================================================================
+    # PHẦN 5 KIỂM THỬ VẬN HÀNH VÀ ĐỐI CHIẾU
+    # =========================================================================
+    add_h1("PHẦN 5 KIỂM THỬ VẬN HÀNH VÀ ĐỐI CHIẾU", page_break=True)
 
-    headers_4_2 = ["Mã Truy Vấn", "Biểu thức LogQL", "Sự kiện kiểm thử kích hoạt", "Dữ liệu thực tế ghi nhận"]
-    data_4_2 = [
-        ["Query 1", '{job="nginx"}', "Duyệt web thông thường, mở dashboard, danh mục dự án", "10+ dòng access log JSON đầy đủ method, path, status 200"],
-        ["Query 2", '{job="nginx"} | json | status >= 400', "Truy cập URL lạ /not-found-demo, CSRF denied", "8+ dòng log lọc chính xác status 404 và 403"],
-        ["Query 3", '{job="app"} | json | event="login_failed"', "Cố tình nhập sai mật khẩu admin trên giao diện", "Dòng audit log chứa event=login_failed, status=401, ẩn password"]
-    ]
-    add_styled_table(headers_4_2, data_4_2, [1.0, 2.3, 1.8, 1.5])
-    add_p("Bảng 4.2: Ba truy vấn LogQL kiểm chứng hệ thống logging tập trung", bold=True, italic=True, align=WD_ALIGN_PARAGRAPH.CENTER)
+    add_h2("5.1 Kết quả kiểm thử chức năng và tích hợp")
+    add_table(
+        ["Ca kiểm thử", "Kết quả thực tế", "Đánh giá"],
+        [
+            ["1. Chuyển hướng HTTP sang HTTPS", "Gửi GET http://127.0.0.1:8080 nhận HTTP 301 sang https://127.0.0.1:8443/", "Đạt"],
+            ["2. Healthcheck và kết nối DB", "Endpoint /health trả HTTP 200, status UP, kết nối pm_db bằng tài khoản pm_app", "Đạt"],
+            ["3. Kiểm tra Security Headers", "Phản hồi HTTPS có đủ nosniff, X-Frame-Options: DENY và HSTS, không bị lặp header", "Đạt"],
+            ["4. Kiểm soát truy cập ẩn danh", "Truy cập /projects khi chưa đăng nhập bị chuyển hướng 302 về /login", "Đạt"],
+            ["5. Sinh mã bảo vệ CSRF Token", "Trang /login sinh đầy đủ trường ẩn _csrf gắn với phiên làm việc", "Đạt"],
+            ["6. Đăng nhập sai và ghi log an ninh", "Nhập sai mật khẩu trả HTTP 401; sinh sự kiện login_failed trong log và audit_logs", "Đạt"],
+            ["7. Đăng nhập đúng tài khoản Admin", "Xác thực thành công với tài khoản admin, tạo phiên hợp lệ và mở Dashboard", "Đạt"],
+            ["8. Cờ bảo mật Session Cookie", "Cookie pm_session_id có đủ cờ Secure, HttpOnly và SameSite=Lax", "Đạt"],
+            ["9. Thao tác CRUD: Tạo dự án mới", "POST /projects tạo thành công bản ghi dự án thử nghiệm trong PostgreSQL", "Đạt"],
+            ["10. Thao tác CRUD: Xem chi tiết dự án", "Trang chi tiết dự án hiển thị đúng mã, tên và thông tin vừa tạo", "Đạt"],
+            ["11. Thao tác CRUD: Xóa dự án thử", "POST xóa dự án thử nghiệm thành công, giữ nguyên các dự án mẫu ban đầu", "Đạt"],
+            ["12. Chặn yêu cầu thiếu CSRF Token", "Gửi POST không có trường _csrf bị từ chối ngay với mã HTTP 403 Forbidden", "Đạt"],
+            ["13. Xử lý đường dẫn không tồn tại", "Truy cập route lạ nhận trang lỗi HTTP 404 và ghi nhận vào access log", "Đạt"],
+            ["14. Kiểm tra Prometheus Targets", "API /api/v1/targets xác nhận cả 4 jobs (cadvisor, nginx, postgres, prometheus) đều UP", "Đạt"],
+            ["15. Kiểm tra máy chủ Grafana", "API /api/health của Grafana tại cổng 3002 trả HTTP 200, database: ok", "Đạt"]
+        ],
+        [2.1, 3.6, 0.8]
+    )
+    add_p("Bên cạnh bộ unit tests kiểm tra độc lập các hàm nghiệp vụ trong thư mục app/tests/, kịch bản scripts/smoke_test.py đã thực hiện kiểm thử tích hợp đầu-cuối (end-to-end) trực tiếp trên hệ thống container đang chạy qua giao thức HTTPS và ghi kết quả vào tệp docs/evidence/smoke_test_results.json với tỷ lệ đạt 15/15 (100%).")
 
-    # ==========================================
-    # PHẦN 5: KIỂM THỬ VẬN HÀNH VÀ ĐỐI CHIẾU
-    # ==========================================
-    add_h1("PHẦN 5: KIỂM THỬ VẬN HÀNH VÀ ĐỐI CHIẾU")
-    
-    add_h2("5.1 Kết quả kiểm thử chức năng và tích hợp hệ thống")
-    add_p("Nhóm triển khai đã xây dựng kịch bản kiểm thử tự động hóa toàn diện bằng script scripts/smoke_test.py, bao gồm 15 ca kiểm tra độc lập trên môi trường container thực tế. Kết quả kiểm thử đạt tỷ lệ thành công tuyệt đối 15/15 ca kiểm thử (100% PASS):")
+    add_h2("5.2 Backup phục hồi và bảo toàn dữ liệu")
+    add_p("Kịch bản scripts/backup.py sử dụng công cụ pg_dump bên trong container pm-postgres để trích xuất toàn bộ cấu trúc và dữ liệu của cơ sở dữ liệu pm_db ra tệp SQL nằm trong thư mục backups/ (được loại trừ khỏi Git). Trong lần thực nghiệm, hệ thống đã tạo bản sao lưu backups/pm_db_backup_20261021_234722.sql (dung lượng 33.671 bytes). Để kiểm chứng khả năng phục hồi mà không làm ảnh hưởng hay ghi đè cơ sở dữ liệu đang vận hành, kịch bản scripts/restore_test.py tự động khởi tạo một cơ sở dữ liệu riêng biệt có tên pm_restore_test, nạp tệp SQL vừa sao lưu vào đó và đối chiếu số lượng bản ghi của từng bảng:")
+    add_code(
+"""python scripts/backup.py
+python scripts/restore_test.py"""
+    )
+    add_table(
+        ["Bảng đối chiếu", "Số bản ghi nguồn (pm_db)", "Số bản ghi phục hồi (pm_restore_test)", "Kết quả đối chiếu"],
+        [
+            ["users", "3", "3", "Khớp 100%"],
+            ["members", "5", "5", "Khớp 100%"],
+            ["projects", "4", "4", "Khớp 100%"],
+            ["tasks", "9", "9", "Khớp 100%"],
+            ["project_members", "10", "10", "Khớp 100%"],
+            ["audit_logs", "11", "11", "Khớp 100%"]
+        ],
+        [1.8, 1.6, 1.8, 1.3]
+    )
+    add_p("Kết quả kiểm chứng được lưu trong docs/evidence/restore_verification.json cho thấy toàn bộ 6 bảng dữ liệu nghiệp vụ trên cơ sở dữ liệu phục hồi thử nghiệm pm_restore_test có số lượng bản ghi khớp tuyệt đối với cơ sở dữ liệu gốc pm_db. Ngoài ra, khi thực hiện khởi động lại container pm-app và pm-postgres, toàn bộ dự án, công việc và thành viên vẫn được giữ nguyên nhờ cơ chế lưu trữ trên named volume pm_postgres_data.")
 
-    headers_5_1 = ["STT", "Ca kiểm thử tự động", "Kết quả thực tế ghi nhận", "Đánh giá"]
-    data_5_1 = [
-        ["01", "Chuyển hướng HTTP sang HTTPS", "Gửi request cổng 8080 nhận HTTP 301 chuyển hướng sang https://127.0.0.1:8443/", "PASS"],
-        ["02", "Health check & Kết nối Database", "Endpoint /health phản hồi HTTP 200: {status: UP, db: CONNECTED, user: pm_app}", "PASS"],
-        ["03", "Kiểm tra Security Headers", "X-Content-Type-Options: nosniff; X-Frame-Options: DENY; HSTS: active", "PASS"],
-        ["04", "Kiểm soát truy cập (Access Control)", "Yêu cầu /projects khi chưa login lập tức bị redirect về /login", "PASS"],
-        ["05", "Tạo và kiểm tra CSRF Token", "Form đăng nhập tự động nhúng mã CSRF token ngẫu nhiên độ dài an toàn", "PASS"],
-        ["06", "Sự kiện Đăng nhập thất bại", "Đăng nhập sai nhận HTTP 401; log ứng dụng sinh event login_failed", "PASS"],
-        ["07", "Xác thực Đăng nhập thành công", "Đăng nhập đúng tài khoản admin nhận phiên làm việc, chuyển hướng vào Dashboard", "PASS"],
-        ["08", "Cờ an toàn của Session Cookie", "pm_session_id được thiết lập với đầy đủ cờ HttpOnly, SameSite=Lax, Secure=true", "PASS"],
-        ["09", "Thao tác CRUD: Thêm dự án mới", "Gửi POST tạo dự án PRJ-TEST-332, cơ sở dữ liệu tạo bản ghi thành công ID: 7", "PASS"],
-        ["10", "Thao tác CRUD: Đọc chi tiết dự án", "Truy cập /projects/7 xác nhận nội dung vừa tạo hiển thị chính xác trên giao diện", "PASS"],
-        ["11", "Thao tác CRUD: Xóa dự án", "Gửi yêu cầu xóa dự án ID: 7, cơ sở dữ liệu xóa thành công bản ghi thử nghiệm", "PASS"],
-        ["12", "Cơ chế bảo vệ chống CSRF", "Gửi POST không mang theo CSRF token bị hệ thống chặn đứng với mã HTTP 403 Forbidden", "PASS"],
-        ["13", "Xử lý lỗi HTTP 404", "Truy cập đường dẫn lạ trả về trang 404 thiết kế chuẩn và ghi log cảnh báo", "PASS"],
-        ["14", "Prometheus Targets Active", "API /api/v1/targets xác nhận 4/4 targets (cadvisor, nginx, postgres, prometheus) đều UP", "PASS"],
-        ["15", "Grafana Server & Datasource", "Grafana phản hồi HTTP 200, nạp thành công 2 datasource Prometheus và Loki", "PASS"]
-    ]
-    add_styled_table(headers_5_1, data_5_1, [0.5, 2.2, 3.1, 0.7])
-    add_p("Bảng 5.1: Kết quả kiểm thử chức năng và tích hợp hệ thống (15/15 ca kiểm thử PASS)", bold=True, italic=True, align=WD_ALIGN_PARAGRAPH.CENTER)
+    add_h2("5.3 Các lỗi gặp và cách xử lý")
+    add_table(
+        ["Hiện tượng", "Nguyên nhân và cách xử lý thực tế"],
+        [
+            ["Cổng 3000/3001 trên host đã được sử dụng", "Máy chủ đang chạy các container của một dự án khác; ánh xạ Grafana sang cổng 3002 (127.0.0.1:3002) và giữ nguyên toàn bộ container của dự án khác"],
+            ["Ổ đĩa C: hết dung lượng khi tải Docker image", "Docker Desktop WSL2 giải nén nhiều layer lớn làm đầy ổ C:; di chuyển 9,8 GB tệp cài đặt tạm sang ổ E: để giải phóng bộ nhớ và khôi phục hoạt động Docker"],
+            ["pgAdmin 8.14 từ chối email mặc định đuôi .local", "Phiên bản pgAdmin 8.14 kiểm tra nghiêm ngặt tên miền email; cập nhật biến PGADMIN_DEFAULT_EMAIL thành dtc245220019@ictu.edu.vn"],
+            ["Promtail không đọc được log Nginx mặc định", "Image nginx:alpine trỏ symlink access.log/error.log vào /dev/stdout và /dev/stderr; dùng init-logs xóa symlink và tạo tệp vật lý thật trên volume pm_nginx_logs"],
+            ["Panel CPU/RAM container trên Grafana báo No data", "cAdvisor v0.51.0 không đọc được nhãn name trên Docker Engine 29 dùng containerd snapshotter; nâng cấp lên ghcr.io/google/cadvisor:0.55.1 và mount /var/lib/containerd:ro"]
+        ],
+        [2.3, 4.2]
+    )
 
-    add_h2("5.2 Quy trình sao lưu và phục hồi dữ liệu độc lập")
-    add_p("Công tác bảo toàn dữ liệu được thực hiện tự động hóa qua script scripts/backup.py. Quá trình sao lưu sử dụng tiện ích chuẩn pg_dump của PostgreSQL với tùy chọn --clean --if-exists, tạo ra bản sao lưu pm_db_backup_20261021_234722.sql dung lượng 33,671 bytes nằm an toàn trong thư mục backups ngoài Git.")
-    add_p("Kiểm chứng phục hồi dữ liệu độc lập: Nhằm đảm bảo an toàn tuyệt đối và không gây ảnh hưởng tới cơ sở dữ liệu đang hoạt động, script scripts/restore_test.py tạo ra một cơ sở dữ liệu độc lập hoàn toàn mang tên pm_restore_test, sau đó thực hiện nạp toàn bộ bản sao lưu vào database thử nghiệm này. Kết quả đối chiếu số lượng bản ghi giữa database gốc và database phục hồi đạt tỷ lệ khớp chính xác 100%:")
+    add_h2("5.4 Đối chiếu yêu cầu và kịch bản demo")
+    add_table(
+        ["Yêu cầu đề bài", "Minh chứng trong báo cáo"],
+        [
+            ["Quản lý mã nguồn trên GitHub", "Hình 2.1, 2.2; ba commit mốc kỹ thuật, README hướng dẫn tái lập và cấu hình .gitignore"],
+            ["Ứng dụng Quản lý Dự án, PostgreSQL và pgAdmin", "Hình 2.3 đến 2.10; đầy đủ chức năng dự án, công việc, thành viên, audit logs và 7 bảng trong pgAdmin 4"],
+            ["Docker Compose và Nginx reverse proxy", "Mục 2.3, 3.1 và 3.2; điều phối đa container, proxy_pass, HTTPS tự ký RSA 3072 bit và security headers"],
+            ["Giám sát với Prometheus và Grafana", "Hình 4.1 đến 4.3; 4 targets UP, metrics dịch vụ web/DB và đồ thị tài nguyên container thực tế"],
+            ["Thu thập log với Loki, Promtail và 3 LogQL", "Hình 4.4 đến 4.6; log JSON của Nginx/app và 3 truy vấn LogQL trả về dữ liệu thật"],
+            ["Hardening hệ thống (tối thiểu 4 biện pháp)", "Mục 3.3 và 3.4; đã áp dụng và kiểm chứng 8 biện pháp (non-root, read-only, cap_drop, internal net, least privilege...)"],
+            ["Kiểm thử, sao lưu phục hồi và báo cáo hoàn chỉnh", "Mục 5.1 và 5.2; 15/15 smoke test PASS, backup/restore vào DB riêng khớp 100%, báo cáo đúng chuẩn mẫu"]
+        ],
+        [2.2, 4.3]
+    )
+    add_p("Kịch bản trình diễn (demo) trong buổi bảo vệ được thực hiện tuần tự qua 6 bước: (1) Mở trang GitHub repository giới thiệu cấu trúc mã nguồn, tài liệu README và lịch sử các commit mốc; (2) Truy cập http://localhost:8080 để chứng minh Nginx tự động chuyển hướng sang https://localhost:8443, đăng nhập tài khoản quản trị, thực hiện thêm/cập nhật dự án cùng công việc và kiểm tra vết trong trang Audit Logs; (3) Mở pgAdmin 4 tại http://localhost:8081 đối chiếu trực tiếp dữ liệu trong 7 bảng của cơ sở dữ liệu pm_db; (4) Mở Prometheus tại http://localhost:9090/targets xác nhận 4 targets UP và mở Grafana Dashboard tại http://localhost:3002 trình bày các đồ thị CPU, RAM, mạng, lưu lượng Nginx và kết nối PostgreSQL; (5) Chuyển sang Grafana Explore chạy trực tiếp 3 câu truy vấn LogQL trên nguồn dữ liệu Loki; (6) Chạy nhanh hai kịch bản kiểm chứng verify_hardening.py và restore_test.py trên cửa sổ dòng lệnh mà không mở tệp .env hay làm lộ mật khẩu.")
 
-    headers_5_2 = ["Tên Bảng Dữ Liệu", "Số bản ghi nguồn (Source)", "Số bản ghi phục hồi (Restored)", "Kết quả đối chiếu"]
-    data_5_2 = [
-        ["users", "3", "3", "KHỚP 100%"],
-        ["members", "5", "5", "KHỚP 100%"],
-        ["projects", "4", "4", "KHỚP 100%"],
-        ["tasks", "9", "9", "KHỚP 100%"],
-        ["project_members", "10", "10", "KHỚP 100%"],
-        ["audit_logs", "11", "11", "KHỚP 100%"]
-    ]
-    add_styled_table(headers_5_2, data_5_2, [1.8, 1.6, 1.6, 1.5])
-    add_p("Bảng 5.2: Kết quả backup và phục hồi thử nghiệm độc lập trên cơ sở dữ liệu riêng", bold=True, italic=True, align=WD_ALIGN_PARAGRAPH.CENTER)
-
-    add_p("Sau khi hoàn tất kiểm tra tính toàn vẹn của dữ liệu, database thử nghiệm được dọn dẹp an toàn. Thử nghiệm khởi động lại (restart) container pm-app và pm-postgres chứng minh toàn bộ dữ liệu dự án, công việc và thành viên vẫn được bảo toàn nguyên vẹn trên named volume pm_postgres_data.")
-
-    add_h2("5.3 Các sự cố kỹ thuật gặp phải và giải pháp khắc phục")
-    add_p("Trong suốt quá trình thiết lập và triển khai hệ thống thực tế, nhóm đã ghi nhận và xử lý bài bản 4 sự cố kỹ thuật điển hình:")
-
-    headers_5_3 = ["Sự cố kỹ thuật phát sinh", "Nguyên nhân gốc rễ", "Giải pháp khắc phục triệt để"]
-    data_5_3 = [
-        ["1. Cạn kiệt ổ đĩa C: (0 MB) khi kéo Docker image", 
-         "Docker Desktop WSL2 tải nhiều layer image nặng cùng lúc trong khi ổ C: của máy chủ còn ít dung lượng trống", 
-         "Phát hiện và di chuyển an toàn 2 file cài đặt lớn (~9.8 GB) sang phân vùng E:\\ProjectManagement\\temp_downloads (thêm vào .gitignore), giải phóng 9.8 GB cho ổ C:."],
-        ["2. pgAdmin 8.14 từ chối email định dạng .local", 
-         "Phiên bản pgAdmin 8.14 áp dụng bộ kiểm tra Regex email RFC nghiêm ngặt, từ chối các domain nội bộ như .local", 
-         "Cập nhật biến môi trường PGADMIN_DEFAULT_EMAIL=dtc245220019@ictu.edu.vn chuẩn định dạng giáo dục hợp lệ."],
-        ["3. Xung đột cổng máy chủ (Port 3000/3001)", 
-         "Máy trạm đang chạy các container của dự án khác trên cổng 3000 và 3001", 
-         "Ánh xạ cổng dịch vụ Grafana sang cổng 3002 (127.0.0.1:3002), giữ nguyên toàn bộ các container và dịch vụ khác trên máy."],
-        ["4. Nginx Alpine symlink log ra /dev/stdout", 
-         "Image nginx:alpine mặc định liên kết access.log/error.log vào luồng console, khiến Promtail không thể đọc được file trên volume", 
-         "Cấu hình container init-logs và lệnh container un-link các symlink, tạo file log vật lý thực tế trong named volume pm_nginx_logs để Promtail tail dữ liệu."]
-    ]
-    add_styled_table(headers_5_3, data_5_3, [1.8, 2.0, 2.7])
-    add_p("Bảng 5.3: Các sự cố kỹ thuật gặp phải trong quá trình triển khai và cách khắc phục", bold=True, italic=True, align=WD_ALIGN_PARAGRAPH.CENTER)
-
-    add_h2("5.4 Bảng đối chiếu tiêu chí đánh giá và kịch bản demo")
-    add_p("Hệ thống đáp ứng toàn diện và vượt mức các yêu cầu kỹ thuật do giảng viên đề ra trong học phần:")
-
-    headers_5_4 = ["Tiêu chí đánh giá của đề bài", "Minh chứng kỹ thuật tương ứng trong đồ án", "Mức độ hoàn thành"]
-    data_5_4 = [
-        ["1. Quản lý mã nguồn trên GitHub", "Repository công khai, tài liệu README chi tiết, 3 commit mốc theo chuẩn Git Flow", "100% Hoàn thành"],
-        ["2. Ứng dụng Quản lý Dự án & DB", "Đầy đủ nghiệp vụ Projects, Tasks, Members, Audit Logs; PostgreSQL 16 + pgAdmin 4", "100% Hoàn thành"],
-        ["3. Docker Compose & Nginx", "Compose mô-đun, Nginx SSL termination RSA 3072 bit, chuyển hướng HTTP->HTTPS, Security Headers", "100% Hoàn thành"],
-        ["4. Giám sát Prometheus & Grafana", "Prometheus scrape 4 targets UP (100%), Grafana auto-provisioning dashboard chuyên sâu", "100% Hoàn thành"],
-        ["5. Nhật ký Loki & Promtail", "Log JSON có cấu trúc, 3 truy vấn LogQL thực thi thành công minh chứng truy vết sự cố", "100% Hoàn thành"],
-        ["6. Gia cố an toàn hệ thống (Hardening)", "Non-root UID 1000, read-only rootfs, cap_drop ALL, internal DB network, least privilege", "100% Hoàn thành"],
-        ["7. Kiểm thử & Sao lưu phục hồi", "15/15 ca smoke test PASS, sao lưu pg_dump và phục hồi thử nghiệm độc lập khớp 100%", "100% Hoàn thành"],
-        ["8. Báo cáo Word chuẩn mực", "Báo cáo >10 trang, bìa đúng mẫu ICTU, số liệu và hình ảnh chụp thực tế từ hệ thống đang chạy", "100% Hoàn thành"]
-    ]
-    add_styled_table(headers_5_4, data_5_4, [2.0, 3.5, 1.0])
-    add_p("Bảng 5.4: Bảng đối chiếu tiêu chí chấm điểm và kết quả đạt được", bold=True, italic=True, align=WD_ALIGN_PARAGRAPH.CENTER)
-
-    add_h3("Kịch bản Demo hệ thống từng bước tại buổi bảo vệ")
-    headers_5_5 = ["Bước", "Nội dung trình diễn Demo", "Thao tác thực hiện", "Kết quả mong đợi"]
-    data_5_5 = [
-        ["1", "Kiểm tra mã nguồn & Git", "Mở trình duyệt xem GitHub repo và gõ lệnh: git log --oneline", "Hiển thị 3 commit mốc kỹ thuật, README và cây thư mục chuẩn."],
-        ["2", "Khởi chạy hệ thống", "Thực thi: docker compose -f compose.yaml -f compose.monitoring.yaml -f compose.logging.yaml ps", "11 containers ở trạng thái running (Up), init-logs ở trạng thái Exited (0)."],
-        ["3", "Truy cập Web & Nginx HTTPS", "Mở trình duyệt truy cập http://localhost:8080", "Tự động chuyển hướng sang https://localhost:8443, hiển thị giao diện đăng nhập."],
-        ["4", "Thao tác nghiệp vụ ứng dụng", "Đăng nhập tài khoản admin, thêm dự án mới, cập nhật trạng thái task, gán thành viên", "Dữ liệu được lưu trữ tức thời, Dashboard cập nhật tỷ lệ hoàn thành, Audit Logs ghi nhận."],
-        ["5", "Đối chiếu trên pgAdmin 4", "Truy cập http://localhost:8081, xem bảng projects và tasks trong database pm_db", "Dữ liệu vừa thêm xuất hiện đầy đủ trong PostgreSQL."],
-        ["6", "Trình diễn Prometheus", "Truy cập http://localhost:9090/targets", "Hiển thị 4 targets (prometheus, cadvisor, nginx, postgres) đều màu xanh UP."],
-        ["7", "Trình diễn Grafana Dashboard", "Truy cập http://localhost:3002, mở Dashboard Project Management", "Hiển thị trực quan đồ thị CPU, RAM, Network và số kết nối PostgreSQL theo thời gian thực."],
-        ["8", "Thực thi 3 truy vấn LogQL", "Vào Grafana Explore (Loki), chạy lần lượt 3 câu LogQL đã cấu hình", "Trả về dòng log thật: access log Nginx, lọc lỗi >= 400 và sự kiện login_failed."],
-        ["9", "Minh chứng Hardening", "Chạy scripts/verify_hardening.py kiểm tra UID, read-only rootfs, cap_drop, internal net", "Hiển thị kết quả xác minh bảo mật đạt chuẩn."],
-        ["10", "Minh chứng Backup/Restore", "Chạy scripts/backup.py và scripts/restore_test.py", "Tạo file backup SQL và phục hồi thử nghiệm đối chiếu khớp 100% bản ghi."]
-    ]
-    add_styled_table(headers_5_5, data_5_5, [0.6, 2.0, 2.2, 1.7])
-    add_p("Bảng 5.5: Kịch bản demo hệ thống từng bước", bold=True, italic=True, align=WD_ALIGN_PARAGRAPH.CENTER)
-
-    # ==========================================
+    # =========================================================================
     # KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN
-    # ==========================================
-    add_h1("KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN")
-    add_p("Đồ án đã hoàn thành xuất sắc 100% các mục tiêu đề ra cho Đề tài số 14: “Hệ thống Quản lý Dự án (Project Management)” theo đúng tiêu chuẩn yêu cầu của học phần Triển khai và Quản trị Hệ thống Phần mềm. Hệ thống không chỉ đáp ứng hoàn chỉnh các chức năng nghiệp vụ phần mềm mà còn thiết lập thành công một hạ tầng vận hành container hóa hiện đại, bảo mật và có khả năng quan sát toàn diện.")
-    add_p("Những kết quả nổi bật đã đạt được gồm:")
-    add_p("1. Đóng gói và điều phối chuẩn mực: 100% các thành phần (App, Database, Nginx, Prometheus, Grafana, Loki, Promtail, cAdvisor, Exporters) được đóng gói độc lập và quản lý thống nhất bằng Docker Compose với healthcheck và named volumes bền vững.")
-    add_p("2. An toàn thông tin đa tầng: Thiết lập HTTPS tự ký với chứng chỉ RSA 3072 bit, đầy đủ HTTP security headers, chạy non-root user (UID 1000), hệ thống tệp chỉ đọc (read-only rootfs), loại bỏ toàn bộ Linux Capabilities nguy hiểm, mạng database internal cô lập hoàn toàn và phân quyền tài khoản cơ sở dữ liệu theo nguyên tắc đặc quyền tối thiểu.")
-    add_p("3. Khả năng quan sát (Observability) vượt trội: Thu thập tự động 4 luồng metrics với 100% targets UP; trực quan hóa trực quan trên Grafana; quản lý tập trung toàn bộ nhật ký ứng dụng và web server bằng Loki/Promtail với 3 truy vấn LogQL chuyên sâu.")
-    add_p("4. Kiểm thử và sao lưu tin cậy: Toàn bộ 15 ca kiểm thử tự động đạt kết quả PASS; quy trình sao lưu và phục hồi thử nghiệm độc lập chứng minh tính toàn vẹn 100% của dữ liệu mà không làm gián đoạn hệ thống chính.")
+    # =========================================================================
+    add_h1("KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN", page_break=True)
+    add_p("Đề tài số 14 đã triển khai hoàn chỉnh Hệ thống Quản lý Dự án (Project Management) đáp ứng đầy đủ các chức năng quản trị dự án, phân công công việc, quản lý thành viên và nhật ký kiểm toán trên nền tảng Docker Compose, kết nối cơ sở dữ liệu PostgreSQL 16 và quản trị qua pgAdmin 4. Nginx đảm nhiệm vai trò reverse proxy bảo mật với chứng chỉ HTTPS tự ký RSA 3072 bit và các HTTP security headers chuẩn mực. Toàn bộ mã nguồn, tệp cấu hình và tài liệu hướng dẫn đã được quản lý có hệ thống trên GitHub với các commit mốc rõ ràng.")
+    add_p("Hệ thống quan sát thu thập thành công các chỉ số tài nguyên phần cứng container (qua cAdvisor 0.55.1), lưu lượng web server (qua Nginx exporter) và hoạt động cơ sở dữ liệu (qua PostgreSQL exporter). Bốn mục tiêu trên Prometheus đều đạt trạng thái UP và hiển thị dữ liệu thời gian thực trên Grafana dashboard được provision tự động. Ngăn xếp Loki và Promtail thu gom hiệu quả nhật ký JSON từ ứng dụng và Nginx, đáp ứng chính xác cả ba truy vấn LogQL phục vụ theo dõi truy cập, lọc lỗi HTTP và phát hiện sự kiện đăng nhập thất bại. Các lớp hardening bảo mật cùng quy trình sao lưu, phục hồi thử vào cơ sở dữ liệu độc lập pm_restore_test đã được kiểm chứng toàn diện.")
+    add_p("Bên cạnh các kết quả đạt được, hệ thống trong phạm vi môn học vẫn còn một số giới hạn thực tế: ứng dụng hiện chạy một instance duy nhất với bộ đếm rate limit lưu trong bộ nhớ RAM; chứng chỉ TLS là chứng chỉ tự ký chỉ phục vụ môi trường demo cục bộ; các quy tắc cảnh báo trên Prometheus chưa kết nối tới kênh gửi thông báo tự động ra bên ngoài (như Alertmanager qua Email/Telegram); tệp nhật ký trên volume chưa thiết lập cơ chế xoay vòng (log rotation) tự động và tác tử Promtail đã bước vào giai đoạn EOL theo lộ trình của nhà phát triển.")
+    add_p("Hướng phát triển tiếp theo của đề tài là tích hợp công cụ xoay vòng nhật ký (logrotate), nâng cấp tác tử thu gom log từ Promtail sang Grafana Alloy, cấu hình Alertmanager để chủ động gửi cảnh báo khi dịch vụ gián đoạn, sử dụng chứng chỉ số từ CA tin cậy khi triển khai trên tên miền thực tế và xây dựng quy trình CI/CD tự động quét lỗ hổng bảo mật cho các Docker image trước khi phát hành.")
 
-    add_p("Các mặt còn hạn chế của đồ án:")
-    add_p("• Hệ thống hiện được triển khai trên môi trường đơn máy chủ (Single-node Docker Host), chưa mở rộng theo quy mô cụm phân tán (Cluster).")
-    add_p("• Chứng chỉ số TLS hiện tại là chứng chỉ tự ký (Self-signed) phục vụ môi trường kiểm thử nội bộ localhost, chưa phải là chứng chỉ được cấp bởi CA công cộng tin cậy (như Let's Encrypt).")
-    add_p("• Hệ thống giám sát mới dừng lại ở việc hiển thị trực quan, chưa tích hợp kênh gửi cảnh báo tức thời (Alertmanager thông báo qua Telegram hoặc Email khi có sự cố).")
-
-    add_p("Định hướng nghiên cứu và phát triển tiếp theo:")
-    add_p("• Nâng cấp hệ thống lên nền tảng điều phối Kubernetes (K8s) nhằm hỗ trợ tự động mở rộng (Auto-scaling) và tăng cường tính sẵn sàng cao (High Availability).")
-    add_p("• Tích hợp cơ chế tự động cấp phát và gia hạn chứng chỉ SSL miễn phí thông qua Certbot / Let's Encrypt khi triển khai trên tên miền Internet thực tế.")
-    add_p("• Bổ sung mô-đun Alertmanager kết nối Webhook gửi thông báo tự động tới kênh Telegram của đội ngũ vận hành khi dịch vụ bị DOWN hoặc tỷ lệ lỗi HTTP tăng đột biến.")
-    add_p("• Xây dựng đường ống tích hợp và triển khai liên tục (CI/CD Pipeline) với GitHub Actions để tự động hóa toàn bộ quy trình kiểm thử, build Docker image và deploy lên máy chủ.")
-
-    # ==========================================
+    # =========================================================================
     # TÀI LIỆU THAM KHẢO
-    # ==========================================
-    add_h1("TÀI LIỆU THAM KHẢO")
+    # =========================================================================
+    add_h1("TÀI LIỆU THAM KHẢO", page_break=True)
     refs = [
-        "[1] Docker Inc., “Docker Compose File Reference & Networking Documentation”, 2026. https://docs.docker.com/compose/",
-        "[2] Nginx Software Inc., “NGINX Reverse Proxy, SSL Termination and Security Controls”, 2026. https://nginx.org/en/docs/",
-        "[3] PostgreSQL Global Development Group, “PostgreSQL 16 Reference Manual: Security and Administration”, 2026. https://www.postgresql.org/docs/16/",
-        "[4] Prometheus Authors, “Prometheus Querying Basics, Metrics Types and Best Practices”, 2026. https://prometheus.io/docs/",
-        "[5] Grafana Labs, “Grafana Dashboards, Datasource Provisioning and Alerting Guide”, 2026. https://grafana.com/docs/grafana/latest/",
-        "[6] Grafana Labs, “Grafana Loki: LogQL Query Language & Architecture Guide”, 2026. https://grafana.com/docs/loki/latest/",
-        "[7] Open Web Application Security Project (OWASP), “OWASP Top 10 Web Application Security Risks”, 2025. https://owasp.org/www-project-top-ten/",
-        "[8] Center for Internet Security (CIS), “CIS Docker Benchmark v1.6.0: Hardening Container Environments”, 2024. https://www.cisecurity.org/benchmark/docker",
-        "[9] Express.js Foundation, “Production Best Practices: Performance and Reliability in Node.js”, 2026. https://expressjs.com/en/advanced/best-practice-performance.html",
-        "[10] Đinh Gia Bảo, “Repository mã nguồn và cấu hình Đề 14: ProjectManagement_TKQTHT”, GitHub, 2026. https://github.com/dtc245220019-create/ProjectManagement_TKQTHT"
+        ("[1] Docker. Control startup and shutdown order in Compose.", "https://docs.docker.com/compose/how-tos/startup-order/"),
+        ("[2] Docker. Compose file reference.", "https://docs.docker.com/reference/compose-file/"),
+        ("[3] Grafana Labs. Promtail agent và thông báo EOL.", "https://grafana.com/docs/loki/latest/send-data/promtail/"),
+        ("[4] Grafana Labs. LogQL log queries.", "https://grafana.com/docs/loki/latest/query/log_queries/"),
+        ("[5] Prometheus. Querying basics.", "https://prometheus.io/docs/prometheus/latest/querying/basics/"),
+        ("[6] Nginx. HTTP proxy module.", "https://nginx.org/en/docs/http/ngx_http_proxy_module.html"),
+        ("[7] PostgreSQL Global Development Group. PostgreSQL 16 Documentation.", "https://www.postgresql.org/docs/16/"),
+        ("[8] pgAdmin Development Team. pgAdmin 4 Container Deployment.", "https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html"),
+        ("[9] Google. cAdvisor container resource monitoring.", "https://github.com/google/cadvisor"),
+        ("[10] Đinh Gia Bảo. Mã nguồn và cấu hình Hệ thống Quản lý Dự án Đề 14.", "https://github.com/dtc245220019-create/ProjectManagement_TKQTHT")
     ]
-    for r in refs:
-        p_ref = doc.add_paragraph()
-        p_ref.paragraph_format.space_before = Pt(2)
-        p_ref.paragraph_format.space_after = Pt(3)
-        p_ref.paragraph_format.line_spacing = 1.15
-        r_run = p_ref.add_run(r)
-        r_run.font.name = 'Times New Roman'
-        r_run.font.size = Pt(10.5)
+    for title_line, url_line in refs:
+        add_p(title_line)
+        add_p(url_line)
 
-    # Save document
+    add_p("Tài liệu yêu cầu học phần: Đề 14 Hệ thống Quản lý Dự án (Project Management); yêu cầu triển khai bằng Docker Compose, quản lý mã nguồn trên GitHub, cơ sở dữ liệu PostgreSQL và pgAdmin, Nginx reverse proxy, giám sát Prometheus/Grafana, quản lý nhật ký Loki/Promtail với LogQL và hardening bảo mật. Các kết quả thực nghiệm trong báo cáo được kiểm chứng ngày 21–22/10/2026.")
+
     doc.save(OUTPUT_DOCX)
-    print(f"Report successfully created at: {OUTPUT_DOCX}")
+    print(f"Successfully generated report: {OUTPUT_DOCX}")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     create_report()

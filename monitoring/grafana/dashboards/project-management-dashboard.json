@@ -8,111 +8,104 @@
   "liveNow": false,
   "panels": [
     {
-      "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
-      "id": 100,
-      "title": "Trạng thái Dịch vụ & Exporters (Targets Health)",
-      "type": "row"
-    },
-    {
       "id": 1,
-      "title": "Prometheus Target",
+      "title": "Exporter targets",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
-      "targets": [{ "expr": "up{job=\"prometheus\"}", "refId": "A" }],
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "up",
+          "legendFormat": "{{job}}",
+          "refId": "A"
+        }
+      ],
       "options": {
         "colorMode": "value",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "auto",
+        "textMode": "value_and_name",
         "reduceOptions": { "calcs": ["lastNotNull"], "values": false }
       },
       "fieldConfig": {
         "defaults": {
-          "mappings": [
-            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
-          ],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
         }
       }
     },
     {
       "id": 2,
-      "title": "cAdvisor Container Exporter",
+      "title": "Nginx status",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
-      "targets": [{ "expr": "up{job=\"cadvisor\"}", "refId": "A" }],
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "nginx_up",
+          "legendFormat": "nginx_up",
+          "refId": "A"
+        }
+      ],
       "options": {
         "colorMode": "value",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "auto",
         "reduceOptions": { "calcs": ["lastNotNull"], "values": false }
       },
       "fieldConfig": {
         "defaults": {
-          "mappings": [
-            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
-          ],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
         }
       }
     },
     {
       "id": 3,
-      "title": "Nginx Exporter (nginx_up)",
+      "title": "PostgreSQL status",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
-      "targets": [{ "expr": "nginx_up", "refId": "A" }],
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        {
+          "expr": "pg_up",
+          "legendFormat": "pg_up",
+          "refId": "A"
+        }
+      ],
       "options": {
         "colorMode": "value",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "auto",
         "reduceOptions": { "calcs": ["lastNotNull"], "values": false }
       },
       "fieldConfig": {
         "defaults": {
-          "mappings": [
-            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP (Online)", "color": "green" } } }
-          ],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
         }
       }
     },
     {
       "id": 4,
-      "title": "PostgreSQL Exporter (pg_up)",
-      "type": "stat",
-      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
-      "targets": [{ "expr": "pg_up", "refId": "A" }],
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "values": false }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP (Connected)", "color": "green" } } }
-          ],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
-        }
-      }
-    },
-    {
-      "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
-      "id": 101,
-      "title": "Tài nguyên Container (CPU & RAM)",
-      "type": "row"
-    },
-    {
-      "id": 5,
-      "title": "Container CPU Usage (%)",
+      "title": "Container CPU (%)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 6 },
       "targets": [
         {
-          "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{name!=\"\"}[2m])) * 100",
+          "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{job=\"cadvisor\",name!=\"\"}[2m])) * 100",
           "legendFormat": "{{name}}",
           "refId": "A"
         }
@@ -125,13 +118,13 @@
       }
     },
     {
-      "id": 6,
-      "title": "Container Working Set Memory",
+      "id": 5,
+      "title": "Container RAM",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 6 },
       "targets": [
         {
-          "expr": "container_memory_working_set_bytes{name!=\"\"}",
+          "expr": "container_memory_working_set_bytes{job=\"cadvisor\",name!=\"\"}",
           "legendFormat": "{{name}}",
           "refId": "A"
         }
@@ -144,47 +137,97 @@
       }
     },
     {
-      "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
-      "id": 102,
-      "title": "Lưu lượng Web Server (Nginx) & CSDL (PostgreSQL)",
-      "type": "row"
+      "id": 6,
+      "title": "Container network RX",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 6 },
+      "targets": [
+        {
+          "expr": "sum by (name) (rate(container_network_receive_bytes_total{job=\"cadvisor\",name!=\"\"}[2m]))",
+          "legendFormat": "{{name}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        }
+      }
     },
     {
       "id": 7,
-      "title": "Nginx Request Rate (req/s)",
+      "title": "Nginx requests / second",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 14 },
       "targets": [
         {
           "expr": "sum(rate(nginx_http_requests_total[2m]))",
-          "legendFormat": "Requests / giây",
+          "legendFormat": "nginx",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "reqps",
-          "custom": { "fillOpacity": 20, "lineWidth": 2 }
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
         }
       }
     },
     {
       "id": 8,
-      "title": "PostgreSQL Active Backends (Kết nối CSDL)",
+      "title": "Nginx active connections",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 14 },
       "targets": [
         {
-          "expr": "pg_stat_database_numbackends{datname=\"pm_db\"}",
-          "legendFormat": "Kết nối hoạt động (pm_db)",
+          "expr": "nginx_connections_active",
+          "legendFormat": "nginx",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "custom": { "fillOpacity": 20, "lineWidth": 2 }
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "PostgreSQL connections",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 21 },
+      "targets": [
+        {
+          "expr": "pg_stat_database_numbackends{datname=\"pm_db\"}",
+          "legendFormat": "postgres (pm_db)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "PostgreSQL transactions / second",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 21 },
+      "targets": [
+        {
+          "expr": "sum(rate(pg_stat_database_xact_commit{datname=\"pm_db\"}[2m]) + rate(pg_stat_database_xact_rollback{datname=\"pm_db\"}[2m]))",
+          "legendFormat": "postgres (ops/s)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
         }
       }
     }
@@ -196,7 +239,7 @@
   "time": { "from": "now-15m", "to": "now" },
   "timepicker": { "refresh_intervals": ["5s", "10s", "30s", "1m"] },
   "timezone": "browser",
-  "title": "Hệ thống Quản lý Dự án - Container, Web, Database",
+  "title": "Project Management - Containers, Web, Database",
   "uid": "pm-overview-dashboard",
-  "version": 1
+  "version": 2
 }

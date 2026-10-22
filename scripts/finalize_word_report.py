@@ -25,13 +25,24 @@ try:
     print("Updating fields and Table of Contents...")
     try:
         if doc.TablesOfContents.Count > 0:
-            doc.TablesOfContents(1).Update()
-            print("Table of Contents updated!")
+            toc = doc.TablesOfContents(1)
+            toc.Update()
+            toc.Range.ParagraphFormat.SpaceBefore = 0
+            toc.Range.ParagraphFormat.SpaceAfter = 1.5
+            toc.Range.ParagraphFormat.LineSpacingRule = 0 # wdLineSpaceSingle
+            toc.UpdatePageNumbers()
+            print("Table of Contents updated and formatted to single page!")
     except Exception as e:
         print(f"Note on TOC update: {e}")
 
     try:
         doc.Fields.Update()
+        if doc.TablesOfContents.Count > 0:
+            toc = doc.TablesOfContents(1)
+            toc.Range.ParagraphFormat.SpaceBefore = 0
+            toc.Range.ParagraphFormat.SpaceAfter = 1.5
+            toc.Range.ParagraphFormat.LineSpacingRule = 0
+            toc.UpdatePageNumbers()
     except Exception as e:
         print(f"Note on Fields update: {e}")
 
